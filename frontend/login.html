@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sign In — Amazon.in</title>
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body style="background:#EAEDED">
+<div id="toast-container"></div>
+
+<header style="background:var(--amazon-dark);padding:10px 0;text-align:center;border-bottom:1px solid #3a4553">
+  <a href="index.html" style="display:inline-block">
+    <svg width="95" height="29" viewBox="0 0 95 29" fill="none">
+      <text x="0" y="22" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="white">amazon</text>
+      <path d="M5 26 Q47 32 90 26" stroke="#FF9900" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
+  </a>
+</header>
+
+<div style="max-width:400px;margin:24px auto;padding:0 16px">
+  <div class="card" style="border:1px solid #ddd;border-radius:4px;padding:24px">
+    <h1 style="font-size:28px;font-weight:400;margin-bottom:20px">Sign in</h1>
+    <div id="alertBox"></div>
+    <div class="form-group">
+      <label class="form-label">Email or Username</label>
+      <input type="text" id="emailInput" class="form-input" placeholder="Enter email or username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="passInput" class="form-input" placeholder="Enter password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doSignIn()">
+    </div>
+    <button class="btn btn-primary btn-full" style="font-size:14px;font-weight:700;padding:10px;margin-bottom:14px" id="signInBtn" onclick="doSignIn()">Sign in</button>
+    <p style="font-size:12px;color:#555;text-align:center;line-height:1.5">By continuing, you agree to Amazon's <a href="#" style="color:var(--amazon-link)">Conditions of Use</a> and <a href="#" style="color:var(--amazon-link)">Privacy Notice</a>.</p>
+    <hr class="divider">
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px">
+      <input type="checkbox" id="keepSignedIn"> <label for="keepSignedIn">Keep me signed in</label>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin:12px 0;display:flex;align-items:center;gap:8px">
+    <div style="flex:1;height:1px;background:#ccc"></div>
+    <span style="font-size:12px;color:#555">New to Amazon?</span>
+    <div style="flex:1;height:1px;background:#ccc"></div>
+  </div>
+
+  <a href="register.html" class="btn btn-outline btn-full" style="font-size:13px;padding:10px;text-align:center;display:block">Create your Amazon account</a>
+
+  <div style="margin-top:12px;text-align:center">
+    <a href="index.html" style="font-size:13px;color:var(--amazon-link)">← Return to Homepage</a>
+  </div>
+
+  <!-- Demo credentials hint -->
+  <div class="alert alert-info" style="margin-top:16px;font-size:12px">
+    <div><strong>Demo Account:</strong><br>
+    Email: demo@amazon-clone.com<br>
+    Password: Demo@123456<br><br>
+    <strong>Admin Account:</strong><br>
+    Email: admin@amazon-clone.com<br>
+    Password: Admin@123456</div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script>
+async function doSignIn() {
+  const email = document.getElementById('emailInput').value.trim();
+  const pass  = document.getElementById('passInput').value;
+  const btn   = document.getElementById('signInBtn');
+  const alert = document.getElementById('alertBox');
+  alert.innerHTML = '';
+
+  if (!email || !pass) {
+    alert.innerHTML = '<div class="alert alert-error">Please enter email and password.</div>';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    await window.Auth.doLogin(email, pass);
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    setTimeout(() => { window.location.href = redirect || 'index.html'; }, 300);
+  } catch(e) {
+    alert.innerHTML = `<div class="alert alert-error">⚠️ ${e.message}</div>`;
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+function showToast(msg, type='success') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`; t.textContent = msg;
+  c.appendChild(t);
+  requestAnimationFrame(()=>{setTimeout(()=>t.classList.add('visible'),10)});
+  setTimeout(()=>{t.classList.remove('visible');setTimeout(()=>t.remove(),400)},2800);
+}
+// If already logged in, redirect
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.Auth && window.Auth.isLoggedIn()) window.location.href = 'index.html';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Secure Checkout — Amazon.in</title>
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+body { background: #eaeded; font-family: 'Segoe UI', Arial, sans-serif; color: #111; }
+.checkout-wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: flex-start; }
+.checkout-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; }
+.checkout-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.checkout-card h2 { font-size: 18px; font-weight: 700; color: #0F1111; margin: 0 0 20px; padding-bottom: 12px; border-bottom: 2px solid var(--amazon-orange); display: flex; align-items: center; gap: 8px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #0F1111; }
+.form-input { width: 100%; border: 1px solid #888; border-radius: 4px; padding: 10px 12px; font-size: 14px; box-sizing: border-box; outline: none; transition: all .2s; }
+.form-input:focus { border-color: var(--amazon-orange); box-shadow: 0 0 0 3px rgba(231,118,0,.15); }
+.pay-option { border: 2px solid #ddd; border-radius: 8px; padding: 16px; cursor: pointer; transition: all .25s; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; position: relative; overflow: hidden; }
+.pay-option:hover { border-color: #bbb; background: #fafafa; }
+.pay-option.selected { border-color: var(--amazon-orange); background: #FFFBF4; box-shadow: 0 2px 8px rgba(231,118,0,0.08); }
+.pay-option input[type=radio] { accent-color: var(--amazon-orange); width: 18px; height: 18px; cursor: pointer; }
+.card-fields { background: #fdfdfd; border: 1px solid #e2e2e2; border-radius: 8px; padding: 20px; margin-top: 6px; display: none; transition: all 0.3s ease; }
+.card-fields.show { display: block; animation: slideDown 0.3s ease; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Interactive 3D flipping card */
+.card-container { perspective: 1000px; width: 100%; max-width: 320px; height: 180px; margin: 0 auto 20px; }
+.credit-card-3d { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 12px; cursor: pointer; }
+.credit-card-3d.flipped { transform: rotateY(180deg); }
+.card-side { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; padding: 20px; box-sizing: border-box; color: #fff; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+.card-front { background: linear-gradient(135deg, #131921 0%, #37475a 100%); }
+.card-back { background: linear-gradient(135deg, #232f3e 0%, #1a222d 100%); transform: rotateY(180deg); }
+.card-logo { align-self: flex-end; font-weight: 800; font-style: italic; font-size: 18px; letter-spacing: 1px; color: var(--amazon-orange); }
+.card-chip { width: 40px; height: 30px; background: #e5c158; border-radius: 4px; margin-bottom: 10px; position: relative; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+.card-number-display { font-family: 'Courier New', Courier, monospace; font-size: 18px; letter-spacing: 2px; word-spacing: 4px; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+.card-meta { display: flex; justify-content: space-between; font-size: 11px; text-transform: uppercase; }
+.card-back-strip { height: 35px; background: #111; margin: 10px -20px 0; }
+.card-cvv-box { background: #fff; color: #111; text-align: right; padding: 8px; font-family: monospace; font-weight: 700; border-radius: 4px; margin-top: 15px; font-size: 14px; position: relative; }
+.card-cvv-box::before { content: 'CVV'; position: absolute; left: 10px; top: 8px; font-size: 10px; color: #777; text-transform: uppercase; }
+
+/* UPI barcode & timer styles */
+.upi-qr-box { text-align: center; background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 20px; max-width: 260px; margin: 12px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.upi-timer { font-size: 20px; font-weight: 700; color: #c5221f; margin-bottom: 10px; font-family: monospace; }
+
+/* Net Banking Modal & Popular Banks */
+.banks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.bank-logo-btn { border: 1px solid #ddd; border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; font-size: 12px; font-weight: 700; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bank-logo-btn:hover { border-color: var(--amazon-orange); background: #fffbf5; transform: translateY(-2px); }
+.bank-logo-btn.selected { border-color: var(--amazon-orange); background: #FFFBF4; box-shadow: 0 0 0 2px rgba(231,118,0,0.15); }
+.bank-icon { font-size: 20px; }
+
+/* CAPTCHA styles */
+.captcha-container { display: flex; align-items: center; gap: 15px; margin: 15px 0 5px; }
+.captcha-box { background: linear-gradient(45deg, #e8f0fe 0%, #d2f0d8 100%); font-family: 'Courier New', monospace, sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 6px; padding: 10px 20px; border-radius: 4px; border: 1px dashed #444; color: #333; user-select: none; font-style: italic; text-shadow: 2px 2px 2px rgba(255,255,255,0.8); position: relative; overflow: hidden; }
+.captcha-box::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); }
+.captcha-refresh-btn { background: none; border: none; font-size: 20px; cursor: pointer; }
+
+/* General styles */
+.summary-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+.summary-item img { width: 56px; height: 56px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; flex-shrink: 0; background: #fff; }
+.place-btn { background: #FFD814; border: 1px solid #FCD200; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; transition: all .15s; margin-top: 12px; box-shadow: 0 2px 5px rgba(213, 162, 0, 0.2); }
+.place-btn:hover { background: #F0C400; box-shadow: 0 4px 10px rgba(213, 162, 0, 0.3); }
+.place-btn:disabled { background: #ccc; border-color: #aaa; cursor: not-allowed; box-shadow: none; }
+
+/* Dynamic Modals */
+.simulation-modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.simulation-modal-bg.open { display: flex; }
+.sim-modal-box { background: #fff; border-radius: 12px; width: 90%; max-width: 440px; box-shadow: 0 15px 45px rgba(0,0,0,0.3); animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow: hidden; }
+@keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.sim-header { background: #131921; color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+.sim-body { padding: 24px; }
+.sim-btn { width: 100%; border: none; border-radius: 6px; padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
+.sim-btn-primary { background: #FFD814; color: #111; }
+.sim-btn-primary:hover { background: #F0C400; }
+.sim-btn-outline { background: #fff; border: 1px solid #ccc; color: #333; }
+.sim-btn-outline:hover { background: #f5f5f5; }
+
+/* Success Page */
+#successOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 999999; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+#successOverlay.show { display: flex; }
+.success-box { background: #fff; border-radius: 16px; padding: 48px 40px; text-align: center; max-width: 480px; width: 90%; box-shadow: 0 25px 60px rgba(0,0,0,0.3); animation: popIn .45s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.success-icon { font-size: 72px; margin-bottom: 20px; animation: bounce 1s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+.success-title { font-size: 28px; font-weight: 700; color: #007600; margin-bottom: 12px; }
+.success-sub { font-size: 15px; color: #444; margin-bottom: 24px; line-height: 1.6; }
+
+/* Processing overlay */
+#processingOverlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 99998; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+#processingOverlay.show { display: flex; }
+.proc-spinner { width: 56px; height: 56px; border: 6px solid #eee; border-top-color: var(--amazon-orange); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Processing Overlay -->
+<div id="processingOverlay">
+  <div class="proc-spinner"></div>
+  <div style="font-size:18px;font-weight:700;color:#0F1111">Processing securely through gateway…</div>
+  <div style="font-size:13px;color:#666">Please do not refresh or close this page.</div>
+</div>
+
+<!-- Success Overlay -->
+<div id="successOverlay">
+  <div class="success-box">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Order Placed Successfully!</div>
+    <div class="success-sub">Thank you for shopping on Amazon.in.<br>Your order is confirmed and will be processed immediately.</div>
+    <div id="successOrderId" style="font-size:14px;color:#333;font-weight:700;background:#f3f3f3;padding:12px;border-radius:6px;margin-bottom:24px;font-family:monospace;border:1px solid #ddd"></div>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <button onclick="window.location.href='orders.html'" style="background:#FFD814;border:1px solid #FCD200;border-radius:6px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">View Order History</button>
+      <button onclick="window.location.href='index.html'" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:12px 24px;font-size:14px;cursor:pointer;font-weight:600">Continue Shopping</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: UPI Simulation -->
+<div class="simulation-modal-bg" id="upiModal">
+  <div class="sim-modal-box">
+    <div class="sim-header">
+      <h3 style="margin:0">📱 UPI Payment Simulation</h3>
+      <span style="cursor:pointer;font-size:20px" onclick="closeSimModal('upiModal')">✕</span>
+    </div>
+    <div class="sim-body" style="text-align:center">
+      <div class="upi-timer" id="upiTimer">03:00</div>
+      <p style="font-size:13px;color:#555">Scan the QR code or approve the request on your UPI App</p>
+      
+      <div class="upi-qr-box">
+        <!-- Styled SVG Mock QR Code -->
+        <svg width="150" height="150" viewBox="0 0 100 100" style="background:#fff;padding:6px;border:1px solid #ccc;border-radius:4px">
+          <!-- QR Borders -->
+          <rect x="0" y="0" width="25" height="25" fill="#111" />
+          <rect x="3" y="3" width="19" height="19" fill="#fff" />
+          <rect x="6" y="6" width="13" height="13" fill="#111" />
+          
+          <rect x="75" y="0" width="25" height="25" fill="#111" />
+          <rect x="78" y="3" width="19" height="19" fill="#fff" />
+          <rect x="81" y="6" width="13" height="13" fill="#111" />
+          
+          <rect x="0" y="75" width="25" height="25" fill="#111" />
+          <rect x="3" y="78" width="19" height="19" fill="#fff" />
+          <rect x="6" y="81" width="13" height="13" fill="#111" />
+          
+          <!-- Mock QR Data Blocks -->
+          <rect x="35" y="5" width="8" height="12" fill="#333" />
+          <rect x="50" y="8" width="15" height="6" fill="#333" />
+          <rect x="30" y="30" width="40" height="8" fill="#111" />
+          <rect x="40" y="45" width="15" height="15" fill="#333" />
+          <rect x="65" y="65" width="20" height="10" fill="#111" />
+          <rect x="80" y="35" width="10" height="20" fill="#333" />
+          <rect x="10" y="40" width="12" height="12" fill="#111" />
+          <rect x="45" y="75" width="15" height="20" fill="#333" />
+          <rect x="70" y="80" width="8" height="8" fill="#111" />
+        </svg>
+        <div style="font-weight:700;font-size:13px;margin-top:12px;color:var(--amazon-orange)">Merchant: AMAZON CLONE</div>
+        <div style="font-size:11px;color:#666" id="upiAmountLabel">Amount: ₹0.00</div>
+      </div>
+      
+      <button class="sim-btn sim-btn-primary" onclick="simulatePaymentApproval('upi')">⚡ Authorize Payment (Simulated)</button>
+      <button class="sim-btn sim-btn-outline" onclick="closeSimModal('upiModal')">Cancel Transaction</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Net Banking Simulation -->
+<div class="simulation-modal-bg" id="netbankingModal">
+  <div class="sim-modal-box">
+    <div class="sim-header">
+      <h3 style="margin:0">🏦 Secure NetBanking Portal</h3>
+      <span style="cursor:pointer;font-size:20px" onclick="closeSimModal('netbankingModal')">✕</span>
+    </div>
+    <div class="sim-body">
+      <div style="text-align:center;font-weight:700;margin-bottom:15px;color:#0F1111;font-size:15px" id="nbPortalTitle">SBI Online Banking</div>
+      <div id="nbLoginForm">
+        <div class="form-group">
+          <label class="form-label">User ID / Username</label>
+          <input type="text" class="form-input" id="nbUsername" value="demo_user12" placeholder="Enter bank customer ID">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="nbPassword" value="●●●●●●●●" placeholder="Enter banking password">
+        </div>
+        <button class="sim-btn sim-btn-primary" onclick="submitNBLogin()">Proceed to Authenticate</button>
+      </div>
+      <div id="nbOtpForm" style="display:none">
+        <div style="background:#e8f0fe;padding:12px;border-radius:6px;font-size:13px;margin-bottom:15px">
+          🔑 OTP sent to your registered mobile number: <strong>+91 ******9999</strong>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Enter 6-Digit OTP</label>
+          <input type="text" class="form-input" id="nbOtp" value="123456" maxlength="6" style="text-align:center;font-size:18px;letter-spacing:6px;font-family:monospace">
+        </div>
+        <button class="sim-btn sim-btn-primary" onclick="simulatePaymentApproval('netbanking')">Complete Secure Payment</button>
+      </div>
+      <button class="sim-btn sim-btn-outline" style="margin-top:10px" onclick="closeSimModal('netbankingModal')">Cancel and Return</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Wallet Simulation -->
+<div class="simulation-modal-bg" id="walletModal">
+  <div class="sim-modal-box">
+    <div class="sim-header">
+      <h3 style="margin:0">🛍️ Link Digital Wallet</h3>
+      <span style="cursor:pointer;font-size:20px" onclick="closeSimModal('walletModal')">✕</span>
+    </div>
+    <div class="sim-body">
+      <div style="text-align:center;font-weight:700;margin-bottom:15px;color:#0F1111;font-size:15px" id="walletPortalTitle">Amazon Pay</div>
+      <div id="walletLoginForm">
+        <div class="form-group">
+          <label class="form-label">Link Mobile Number</label>
+          <input type="text" class="form-input" id="walletPhone" value="9876543210" maxlength="10">
+        </div>
+        <button class="sim-btn sim-btn-primary" onclick="submitWalletLink()">Send Verification Link</button>
+      </div>
+      <div id="walletOtpForm" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Enter 4-Digit Wallet OTP</label>
+          <input type="text" class="form-input" id="walletOtp" value="4321" maxlength="4" style="text-align:center;font-size:20px;letter-spacing:8px;font-family:monospace">
+        </div>
+        <button class="sim-btn sim-btn-primary" onclick="simulatePaymentApproval('wallet')">Verify & Pay Instantly</button>
+      </div>
+      <button class="sim-btn sim-btn-outline" style="margin-top:10px" onclick="closeSimModal('walletModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<header style="background:#131921;padding:12px 20px;display:flex;align-items:center;gap:20px;box-shadow:0 3px 6px rgba(0,0,0,.25)">
+  <a href="index.html" style="display:flex;align-items:center;text-decoration:none">
+    <svg width="90" height="28" viewBox="0 0 90 28"><text x="0" y="21" font-family="Arial Black,sans-serif" font-size="20" font-weight="900" fill="white">amazon</text><path d="M5 24 Q45 30 86 24" stroke="#FF9900" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+    <span style="color:#fff;font-size:11px;margin-top:10px">.in</span>
+  </a>
+  <span style="color:#fff;font-size:18px;font-weight:700;flex:1;text-align:center;letter-spacing:0.5px">🔒 Secure checkout portal</span>
+  <span style="color:#FF9900;font-size:20px">🔒</span>
+</header>
+
+<div class="checkout-wrap" id="checkoutWrap">
+  <!-- LEFT COLUMN -->
+  <div>
+    <!-- 1. Delivery Address -->
+    <div class="checkout-card">
+      <h2>1. Delivery Address</h2>
+      <div class="form-row">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full Name *</label>
+          <input class="form-input" id="shipName" placeholder="First and last name" required>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Street Address *</label>
+          <input class="form-input" id="shipStreet" placeholder="House no., Street, Area, landmark" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City *</label>
+          <input class="form-input" id="shipCity" placeholder="City" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">State *</label>
+          <input class="form-input" id="shipState" placeholder="State" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIN Code *</label>
+          <input class="form-input" id="shipPin" placeholder="6-digit PIN" maxlength="6" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile Number *</label>
+          <input class="form-input" id="shipPhone" placeholder="10-digit mobile" maxlength="10" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Payment -->
+    <div class="checkout-card">
+      <h2>2. Select Payment Method</h2>
+
+      <!-- UPI -->
+      <div class="pay-option selected" id="opt-upi" onclick="selectPayment('upi')">
+        <input type="radio" name="payMethod" value="upi" checked>
+        <div>
+          <div style="font-weight:700;font-size:14px">📱 UPI / PhonePe / GPay / Paytm</div>
+          <div style="font-size:12px;color:#555">Instant QR scan or UPI ID lookup</div>
+        </div>
+      </div>
+      <div id="fields-upi" class="card-fields show">
+        <label class="form-label">Enter UPI ID</label>
+        <input class="form-input" id="upiId" placeholder="username@upi" style="max-width:320px;margin-bottom:8px">
+        <div style="font-size:12px;color:#007185">💡 Demo: Enter any UPI ID (e.g. demo@okaxis) to trigger simulated QR code</div>
+      </div>
+
+      <!-- Credit / Debit Card -->
+      <div class="pay-option" id="opt-card" onclick="selectPayment('card')">
+        <input type="radio" name="payMethod" value="card">
+        <div>
+          <div style="font-weight:700;font-size:14px">💳 Credit / Debit Card</div>
+          <div style="font-size:12px;color:#555">All RuPay, Visa, MasterCard, Amex supported</div>
+        </div>
+      </div>
+      <div id="fields-card" class="card-fields">
+        <!-- Interactive 3D Card Preview -->
+        <div class="card-container" onclick="toggleCardFlip()">
+          <div class="credit-card-3d" id="creditCard3d">
+            <div class="card-side card-front">
+              <span class="card-logo">amazon pay</span>
+              <div class="card-chip"></div>
+              <div class="card-number-display" id="cardNumDisp">•••• •••• •••• ••••</div>
+              <div class="card-meta">
+                <div>
+                  <div style="font-size:8px;opacity:0.7">Cardholder</div>
+                  <div id="cardNameDisp" style="font-size:12px;font-weight:700">YOUR NAME</div>
+                </div>
+                <div>
+                  <div style="font-size:8px;opacity:0.7">Expires</div>
+                  <div id="cardExpDisp" style="font-size:12px;font-weight:700">MM/YY</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-side card-back">
+              <div class="card-back-strip"></div>
+              <div class="card-cvv-box" id="cardCvvDisp">•••</div>
+              <div style="font-size:9px;opacity:0.7;text-align:center;margin-top:15px">AUTHORIZED SIGNATURE REQUIRED</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Card Number</label>
+          <input class="form-input" id="cardNum" placeholder="4242 4242 4242 4242" maxlength="19" oninput="updateCardUI()">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Expiry (MM/YY)</label>
+            <input class="form-input" id="cardExp" placeholder="MM/YY" maxlength="5" oninput="updateCardUI()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVV</label>
+            <input class="form-input" id="cardCvv" placeholder="3 digits" maxlength="3" type="password" onfocus="flipCard(true)" onblur="flipCard(false)" oninput="updateCardUI()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Name on Card</label>
+          <input class="form-input" id="cardName" placeholder="Full name as printed" oninput="updateCardUI()">
+        </div>
+      </div>
+
+      <!-- Net Banking -->
+      <div class="pay-option" id="opt-netbanking" onclick="selectPayment('netbanking')">
+        <input type="radio" name="payMethod" value="netbanking">
+        <div>
+          <div style="font-weight:700;font-size:14px">🏦 Net Banking</div>
+          <div style="font-size:12px;color:#555">Secure login with top Indian banks</div>
+        </div>
+      </div>
+      <div id="fields-netbanking" class="card-fields">
+        <label class="form-label" style="margin-bottom:12px">Select Popular Bank</label>
+        <div class="banks-grid">
+          <div class="bank-logo-btn" id="bank-sbi" onclick="selectNbBank('SBI')"><span class="bank-icon">🇮🇳</span>SBI</div>
+          <div class="bank-logo-btn" id="bank-hdfc" onclick="selectNbBank('HDFC Bank')"><span class="bank-icon">🏦</span>HDFC</div>
+          <div class="bank-logo-btn" id="bank-icici" onclick="selectNbBank('ICICI Bank')"><span class="bank-icon">🛡️</span>ICICI</div>
+          <div class="bank-logo-btn" id="bank-axis" onclick="selectNbBank('Axis Bank')"><span class="bank-icon">💳</span>Axis</div>
+          <div class="bank-logo-btn" id="bank-kotak" onclick="selectNbBank('Kotak Mahindra')"><span class="bank-icon">💰</span>Kotak</div>
+          <div class="bank-logo-btn" id="bank-pnb" onclick="selectNbBank('Punjab National Bank')"><span class="bank-icon">🍁</span>PNB</div>
+        </div>
+        <label class="form-label">Other Banks</label>
+        <select class="form-input" id="bankSelect" onchange="selectNbBank(this.value)">
+          <option value="">-- Choose Bank --</option>
+          <option>Bank of Baroda</option><option>Canara Bank</option><option>Yes Bank</option>
+          <option>Union Bank of India</option><option>IDFC First Bank</option>
+        </select>
+      </div>
+
+      <!-- Wallets -->
+      <div class="pay-option" id="opt-wallet" onclick="selectPayment('wallet')">
+        <input type="radio" name="payMethod" value="wallet">
+        <div>
+          <div style="font-weight:700;font-size:14px">🛍️ Digital Wallets</div>
+          <div style="font-size:12px;color:#555">Amazon Pay, Paytm, PhonePe, MobiKwik</div>
+        </div>
+      </div>
+      <div id="fields-wallet" class="card-fields">
+        <label class="form-label">Select Wallet</label>
+        <select class="form-input" id="walletSelect" style="max-width:280px">
+          <option>Amazon Pay</option><option>Paytm Wallet</option>
+          <option>PhonePe Wallet</option><option>MobiKwik</option>
+        </select>
+      </div>
+
+      <!-- Cash on Delivery -->
+      <div class="pay-option" id="opt-cod" onclick="selectPayment('cod')">
+        <input type="radio" name="payMethod" value="cod">
+        <div>
+          <div style="font-weight:700;font-size:14px">💵 Cash on Delivery</div>
+          <div style="font-size:12px;color:#555">Pay cash/UPI at the doorstep when package arrives</div>
+        </div>
+      </div>
+      <div id="fields-cod" class="card-fields">
+        <label class="form-label">Verify Order (Enter Security Code)</label>
+        <div class="captcha-container">
+          <div class="captcha-box" id="captchaBox">R8K9</div>
+          <button class="captcha-refresh-btn" type="button" onclick="generateCaptcha()">🔄</button>
+          <input type="text" class="form-input" id="captchaInput" placeholder="Enter CAPTCHA" style="max-width:150px;text-align:center;font-size:16px;text-transform:uppercase" maxlength="6">
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Box -->
+    <div id="errBox" style="display:none;background:#fdf0f0;border:1px solid #e88;border-radius:6px;padding:14px;color:#c00;font-size:14px;margin-bottom:16px"></div>
+
+    <!-- Place Order Button -->
+    <button class="place-btn" id="placeBtn" onclick="initiateCheckoutFlow()">
+      🔒 Confirm details and place order
+    </button>
+    <div style="font-size:12px;color:#555;margin-top:10px;text-align:center">
+      All orders are verified securely. By checking out, you agree to Amazon's <a href="#" style="color:#007185">Conditions of Use</a>.
+    </div>
+  </div>
+
+  <!-- RIGHT: Order Summary -->
+  <div style="position:sticky;top:20px">
+    <div class="checkout-card">
+      <h2 style="margin-bottom:14px">Order Summary</h2>
+      <div id="summaryItems"></div>
+      <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span>Items Subtotal:</span><span id="sumItems">₹0</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span>Shipping &amp; Delivery:</span><span id="sumShipping" style="color:#007600">FREE</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span>GST Tax (18%):</span><span id="sumTax">₹0</span></div>
+      <hr style="border:none;border-top:1px solid #eee;margin:10px 0">
+      <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:700;color:#B12704">
+        <span>Order Total:</span><span id="sumTotal">₹0</span>
+      </div>
+      <div style="font-size:12px;color:#007600;margin-top:10px;font-weight:600">✔ Your order qualifies for FREE Delivery</div>
+    </div>
+
+    <!-- Secure Info -->
+    <div class="checkout-card" style="padding:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">🔒 Secure payment protection</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#555">
+        <span>🛡️ 256-bit SSL encryption</span>
+        <span>✔ PCI Certified</span>
+        <span>↩️ Easy cancellations</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script>
+let checkoutItems = [];
+let isDirectPurchase = false;
+let currentNbBank = '';
+let currentCaptcha = '';
+let upiTimerInterval = null;
+let currentOrderId = null;
+
+function fmt(n){return '₹'+Number(n).toLocaleString('en-IN');}
+
+/* CAPTCHA generation */
+function generateCaptcha() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let cap = '';
+  for(let i=0; i<4; i++) cap += chars.charAt(Math.floor(Math.random() * chars.length));
+  currentCaptcha = cap;
+  const cb = document.getElementById('captchaBox');
+  if(cb) cb.textContent = cap;
+}
+
+/* Card 3D rotation toggles */
+function toggleCardFlip() {
+  const card = document.getElementById('creditCard3d');
+  if(card) card.classList.toggle('flipped');
+}
+function flipCard(flipped) {
+  const card = document.getElementById('creditCard3d');
+  if(card) {
+    if(flipped) card.classList.add('flipped');
+    else card.classList.remove('flipped');
+  }
+}
+
+/* Format Card Number spacing */
+function updateCardUI() {
+  const cNum = document.getElementById('cardNum').value.replace(/\D/g,'').substring(0,16);
+  // Apply formatting to input box
+  document.getElementById('cardNum').value = cNum.match(/.{1,4}/g)?.join(' ') || cNum;
+
+  // Update visual card face
+  document.getElementById('cardNumDisp').textContent = cNum.match(/.{1,4}/g)?.join(' ') || '•••• •••• •••• ••••';
+  document.getElementById('cardNameDisp').textContent = document.getElementById('cardName').value.toUpperCase() || 'YOUR NAME';
+  document.getElementById('cardExpDisp').textContent = document.getElementById('cardExp').value || 'MM/YY';
+  document.getElementById('cardCvvDisp').textContent = document.getElementById('cardCvv').value || '•••';
+}
+
+/* Select NB Bank */
+function selectNbBank(bankName) {
+  currentNbBank = bankName;
+  document.querySelectorAll('.bank-logo-btn').forEach(btn => btn.classList.remove('selected'));
+  if(bankName === 'SBI') document.getElementById('bank-sbi').classList.add('selected');
+  if(bankName === 'HDFC Bank') document.getElementById('bank-hdfc').classList.add('selected');
+  if(bankName === 'ICICI Bank') document.getElementById('bank-icici').classList.add('selected');
+  if(bankName === 'Axis Bank') document.getElementById('bank-axis').classList.add('selected');
+  if(bankName === 'Kotak Mahindra') document.getElementById('bank-kotak').classList.add('selected');
+  if(bankName === 'Punjab National Bank') document.getElementById('bank-pnb').classList.add('selected');
+}
+
+/* Toggle payment fields */
+function selectPayment(method){
+  ['upi','card','netbanking','wallet','cod'].forEach(m=>{
+    document.getElementById('opt-'+m).classList.remove('selected');
+    document.querySelector(`input[value="${m}"]`).checked=false;
+    const f=document.getElementById('fields-'+m);
+    if(f)f.classList.remove('show');
+  });
+  document.getElementById('opt-'+method).classList.add('selected');
+  document.querySelector(`input[value="${method}"]`).checked=true;
+  const fd=document.getElementById('fields-'+method);
+  if(fd)fd.classList.add('show');
+  
+  if(method === 'cod') generateCaptcha();
+}
+
+/* Load cart items or query params single item */
+async function loadCheckoutData() {
+  const params = new URLSearchParams(window.location.search);
+  const buyNow = params.get('buynow') === '1';
+
+  if (buyNow) {
+    isDirectPurchase = true;
+    const sessionItem = sessionStorage.getItem('amazon_buy_now');
+    if (sessionItem) {
+      try {
+        const item = JSON.parse(sessionItem);
+        checkoutItems = [{
+          product: item.productId || item.product,
+          name: item.name || 'Product',
+          image: item.image || item.img || 'https://via.placeholder.com/150',
+          price: item.price || 0,
+          quantity: item.qty || item.quantity || 1
+        }];
+      } catch(err) {
+        console.error('Error parsing buy now item:', err);
+      }
+    }
+  } else {
+    const pId = params.get('productId');
+    const qty = parseInt(params.get('qty')) || 1;
+
+    if (pId) {
+      isDirectPurchase = true;
+      try {
+        const res = await window.API.productsAPI.getById(pId);
+        const p = res.product;
+        checkoutItems = [{
+          product: p._id,
+          name: p.name,
+          image: (p.images && p.images[0]) || 'https://via.placeholder.com/150',
+          price: p.price,
+          quantity: qty
+        }];
+      } catch(e) {
+        showErr('Failed to retrieve product details.');
+      }
+    } else {
+      // Load from Cart API
+      try {
+        const res = await window.API.cartAPI.get();
+        const items = res.cart ? res.cart.items : [];
+        checkoutItems = items.map(item => {
+          const prodObj = item.product || {};
+          return {
+            product: prodObj._id || prodObj,
+            name: item.name || prodObj.name || 'Product',
+            image: item.image || (prodObj.images && prodObj.images[0]) || 'https://via.placeholder.com/150',
+            price: item.price || prodObj.price || 0,
+            quantity: item.quantity || item.qty || 1
+          };
+        });
+      } catch(e) {
+        // Fallback local storage
+        const lc = JSON.parse(localStorage.getItem('amazon_local_cart') || '[]');
+        checkoutItems = lc.map(i => ({
+          product: i.product || i.productId || i._id,
+          name: i.name || 'Product',
+          image: i.image || i.img || 'https://via.placeholder.com/150',
+          price: i.price || 0,
+          quantity: i.qty || i.quantity || 1
+        }));
+      }
+    }
+  }
+  renderSummary();
+}
+
+function renderSummary(){
+  if(!checkoutItems.length){
+    document.getElementById('checkoutWrap').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:80px 20px"><div style="font-size:64px">🛒</div><h2 style="font-size:22px;margin:12px 0">Checkout empty</h2><p style="color:#555;margin-bottom:20px">No products selected for checkout.</p><a href="index.html" style="background:#FFD814;border:1px solid #FCD200;border-radius:6px;padding:12px 24px;font-size:15px;font-weight:700;text-decoration:none;color:#000">Return to Store</a></div>';
+    return;
+  }
+  const itemsTotal = checkoutItems.reduce((a,i) => a + (i.price * i.quantity), 0);
+  const shipping = itemsTotal >= 499 ? 0 : 40;
+  const tax = parseFloat((itemsTotal * 0.18).toFixed(2));
+  const total = parseFloat((itemsTotal + shipping + tax).toFixed(2));
+
+  document.getElementById('summaryItems').innerHTML = checkoutItems.map(item => `
+    <div class="summary-item">
+      <img src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/64'">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${item.name}</div>
+        <div style="font-size:12px;color:#555;margin-top:4px">Qty: ${item.quantity} · Price: ${fmt(item.price)}</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;white-space:nowrap">${fmt(item.price * item.quantity)}</div>
+    </div>`).join('');
+
+  document.getElementById('sumItems').textContent = fmt(itemsTotal);
+  document.getElementById('sumShipping').textContent = shipping === 0 ? 'FREE' : fmt(shipping);
+  document.getElementById('sumTax').textContent = fmt(tax);
+  document.getElementById('sumTotal').textContent = fmt(total);
+}
+
+function showErr(msg){
+  const el = document.getElementById('errBox');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+/* Form validation */
+function validateInputs() {
+  const v = s => document.getElementById(s)?.value.trim() || '';
+  if (!v('shipName')) { showErr('Please input shipping full name.'); return false; }
+  if (!v('shipStreet')) { showErr('Please input shipping street address.'); return false; }
+  if (!v('shipCity')) { showErr('Please input shipping city.'); return false; }
+  if (!v('shipState')) { showErr('Please input shipping state.'); return false; }
+  if (!/^\d{6}$/.test(v('shipPin'))) { showErr('Provide valid 6-digit pin code.'); return false; }
+  if (!/^\d{10}$/.test(v('shipPhone'))) { showErr('Provide valid 10-digit phone number.'); return false; }
+
+  const method = document.querySelector('input[name="payMethod"]:checked').value;
+  if (method === 'upi' && !v('upiId')) { showErr('Provide valid UPI ID.'); return false; }
+  if (method === 'card') {
+    if (v('cardNum').replace(/\s/g,'').length < 12) { showErr('Provide a valid credit card number.'); return false; }
+    if (!v('cardExp') || !v('cardExp').includes('/')) { showErr('Expiry MM/YY required.'); return false; }
+    if (v('cardCvv').length < 3) { showErr('CVV required.'); return false; }
+    if (!v('cardName')) { showErr('Cardholder name required.'); return false; }
+  }
+  if (method === 'netbanking' && !currentNbBank) { showErr('Please select your online bank.'); return false; }
+  if (method === 'cod') {
+    if (v('captchaInput').toUpperCase() !== currentCaptcha) {
+      showErr('CAPTCHA verification failed. Please try again.');
+      generateCaptcha();
+      return false;
+    }
+  }
+  return true;
+}
+
+/* Modal Controls */
+function openSimModal(id) { document.getElementById(id).classList.add('open'); }
+function closeSimModal(id) { 
+  document.getElementById(id).classList.remove('open');
+  if(upiTimerInterval) clearInterval(upiTimerInterval);
+}
+
+/* Submit order to MongoDB */
+async function initiateCheckoutFlow() {
+  document.getElementById('errBox').style.display = 'none';
+  if (!validateInputs()) return;
+
+  const method = document.querySelector('input[name="payMethod"]:checked').value;
+  const shipAddr = {
+    fullName: document.getElementById('shipName').value.trim(),
+    street: document.getElementById('shipStreet').value.trim(),
+    city: document.getElementById('shipCity').value.trim(),
+    state: document.getElementById('shipState').value.trim(),
+    pincode: document.getElementById('shipPin').value.trim(),
+    phone: document.getElementById('shipPhone').value.trim()
+  };
+
+  const payload = {
+    orderItems: checkoutItems,
+    shippingAddress: shipAddr,
+    paymentMethod: method
+  };
+
+  const placeBtn = document.getElementById('placeBtn');
+  placeBtn.disabled = true;
+  placeBtn.textContent = 'Contacting server…';
+
+  try {
+    const res = await window.API.ordersAPI.create(payload);
+    if(res.success && res.order) {
+      currentOrderId = res.order._id;
+      
+      // Select appropriate simulation
+      if (method === 'cod') {
+        processOrderSuccess('cod');
+      } else if (method === 'upi') {
+        const totalStr = document.getElementById('sumTotal').textContent;
+        document.getElementById('upiAmountLabel').textContent = `Amount: ${totalStr}`;
+        openSimModal('upiModal');
+        startUpiCountdown();
+      } else if (method === 'card') {
+        processOrderSuccess('card');
+      } else if (method === 'netbanking') {
+        document.getElementById('nbPortalTitle').textContent = `${currentNbBank} Secure Portal`;
+        document.getElementById('nbLoginForm').style.display = 'block';
+        document.getElementById('nbOtpForm').style.display = 'none';
+        openSimModal('netbankingModal');
+      } else if (method === 'wallet') {
+        const walName = document.getElementById('walletSelect').value;
+        document.getElementById('walletPortalTitle').textContent = `${walName} Linkage`;
+        document.getElementById('walletLoginForm').style.display = 'block';
+        document.getElementById('walletOtpForm').style.display = 'none';
+        openSimModal('walletModal');
+      }
+    } else {
+      throw new Error('Order creation failed.');
+    }
+  } catch(e) {
+    placeBtn.disabled = false;
+    placeBtn.textContent = '🔒 Confirm details and place order';
+    showErr(e.message || 'Error occurred while placing the order.');
+  }
+}
+
+/* Start UPI countdown */
+function startUpiCountdown() {
+  let timeLeft = 180; // 3 minutes
+  const timerLabel = document.getElementById('upiTimer');
+  timerLabel.textContent = "03:00";
+  timerLabel.style.color = "#c5221f";
+
+  if (upiTimerInterval) clearInterval(upiTimerInterval);
+  upiTimerInterval = setInterval(() => {
+    timeLeft--;
+    const mins = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
+    timerLabel.textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    
+    if(timeLeft <= 0) {
+      clearInterval(upiTimerInterval);
+      closeSimModal('upiModal');
+      showErr('Payment gateway timed out. Please try again.');
+      document.getElementById('placeBtn').disabled = false;
+      document.getElementById('placeBtn').textContent = '🔒 Confirm details and place order';
+    }
+  }, 1000);
+}
+
+/* Net Banking login submission */
+function submitNBLogin() {
+  document.getElementById('nbLoginForm').style.display = 'none';
+  document.getElementById('nbOtpForm').style.display = 'block';
+}
+
+/* Wallet Link mobile submit */
+function submitWalletLink() {
+  document.getElementById('walletLoginForm').style.display = 'none';
+  document.getElementById('walletOtpForm').style.display = 'block';
+}
+
+/* Simulate Payment approved */
+async function simulatePaymentApproval(method) {
+  closeSimModal('upiModal');
+  closeSimModal('netbankingModal');
+  closeSimModal('walletModal');
+  
+  processOrderSuccess(method);
+}
+
+/* Confirm order payment & cart cleanup */
+async function processOrderSuccess(method) {
+  document.getElementById('processingOverlay').classList.add('show');
+  
+  try {
+    // If not COD, confirm backend order payment
+    if (method !== 'cod') {
+      await window.API.ordersAPI.pay(currentOrderId);
+    }
+    
+    // Clear cart if this was general cart checkout
+    if (!isDirectPurchase) {
+      try {
+        await window.API.cartAPI.clear();
+      } catch(_) {}
+      localStorage.removeItem('amazon_local_cart');
+      document.querySelectorAll('#cartBadge, .cart-count').forEach(badge => {
+        badge.textContent = '0';
+        badge.style.display = 'none';
+      });
+    }
+
+    // Delay visual redirect
+    setTimeout(() => {
+      document.getElementById('processingOverlay').classList.remove('show');
+      document.getElementById('successOrderId').textContent = 'Order ID: ' + currentOrderId.substring(0,18).toUpperCase();
+      document.getElementById('successOverlay').classList.add('show');
+    }, 1500);
+
+  } catch(e) {
+    document.getElementById('processingOverlay').classList.remove('show');
+    showErr(e.message || 'Payment updated failed on server, please contact support.');
+    document.getElementById('placeBtn').disabled = false;
+    document.getElementById('placeBtn').textContent = '🔒 Confirm details and place order';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadCheckoutData();
+  if(window.Auth && window.Auth.isLoggedIn()) {
+    const u = window.Auth.getUser();
+    if(u) {
+      if(u.name) document.getElementById('shipName').value = u.name;
+      if(u.address) {
+        if(u.address.street) document.getElementById('shipStreet').value = u.address.street;
+        if(u.address.city) document.getElementById('shipCity').value = u.address.city;
+        if(u.address.state) document.getElementById('shipState').value = u.address.state;
+        if(u.address.pincode) document.getElementById('shipPin').value = u.address.pincode;
+        if(u.address.phone) document.getElementById('shipPhone').value = u.address.phone;
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

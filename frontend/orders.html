@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Your Orders — Amazon.in</title>
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#EAEDED;font-family:'Segoe UI',Arial,sans-serif}
+.page-wrap{max-width:1000px;margin:24px auto;padding:0 16px}
+.order-card{background:#fff;border:1px solid #ddd;border-radius:4px;margin-bottom:16px;overflow:hidden}
+.order-header{background:#F0F2F2;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:1px solid #ddd}
+.order-meta{font-size:12px;color:#555}
+.order-meta strong{color:#0F1111;font-size:13px}
+.order-body{padding:16px}
+.order-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid #f5f5f5;align-items:flex-start}
+.order-item:last-child{border-bottom:none}
+.status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700}
+.status-Confirmed{background:#e6f4ea;color:#137333}
+.status-Shipped{background:#e8f0fe;color:#1557b0}
+.status-Delivered{background:#d2f0d8;color:#0a5c1f}
+.status-Cancelled{background:#fce8e6;color:#c5221f}
+.status-Refunded{background:#fff3cd;color:#856404}
+.btn-row{display:flex;flex-direction:column;gap:6px;min-width:130px;align-items:flex-end}
+.btn{border:none;border-radius:4px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;width:130px;text-align:center}
+.btn-yellow{background:#FFD814;border:1px solid #FCD200;color:#000}
+.btn-yellow:hover{background:#F7CA00}
+.btn-red{background:#fff;border:1px solid #c00;color:#c00}
+.btn-red:hover{background:#fce8e6}
+.btn-blue{background:#fff;border:1px solid #0066c0;color:#0066c0}
+.btn-blue:hover{background:#e8f0fe}
+.btn-orange{background:#fff;border:1px solid #e47911;color:#e47911}
+.btn-orange:hover{background:#fff8ee}
+.btn-green{background:#fff;border:1px solid #137333;color:#137333}
+.btn-green:hover{background:#e6f4ea}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:8px;padding:28px;max-width:480px;width:90%;position:relative;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:18px;margin-bottom:16px;color:#0F1111}
+.modal-close{position:absolute;top:12px;right:14px;font-size:22px;cursor:pointer;color:#555;background:none;border:none}
+.modal label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px;color:#333}
+.modal select,.modal textarea,.modal input[type=text]{width:100%;border:1px solid #ccc;border-radius:4px;padding:8px;font-size:14px;font-family:inherit}
+.modal textarea{resize:vertical;min-height:80px}
+.modal .submit-btn{margin-top:16px;width:100%;background:#FFD814;border:1px solid #FCD200;border-radius:6px;padding:10px;font-size:15px;font-weight:700;cursor:pointer}
+.modal .submit-btn:hover{background:#F7CA00}
+
+/* Star Rating */
+.stars{display:flex;gap:6px;font-size:32px;cursor:pointer;margin:10px 0}
+.star{color:#ddd;transition:color .15s}
+.star.lit,.star:hover{color:#FF9900}
+
+/* Exchange product list */
+.exchange-item{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.exchange-item:hover,.exchange-item.selected{border-color:#FF9900;background:#fff8ee}
+.exchange-item img{width:50px;height:50px;object-fit:contain;border:1px solid #eee;border-radius:3px}
+.exchange-item .ename{font-size:13px;font-weight:600}
+.exchange-item .eprice{font-size:12px;color:#555}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#232f3e;color:#fff;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;z-index:99999;display:none;transition:opacity .3s}
+
+/* Rating display */
+.rating-stars{color:#FF9900;font-size:14px}
+.user-review-box{margin-top:8px;padding:8px;background:#f8f8f8;border-radius:4px;font-size:13px;color:#333}
+
+/* Progress Timeline styling */
+.timeline-wrap { display: flex; justify-content: space-between; margin: 24px 0 10px; position: relative; }
+.timeline-line { position: absolute; top: 12px; left: 6%; right: 6%; height: 4px; background: #ddd; z-index: 1; border-radius: 2px; }
+.timeline-fill { position: absolute; top: 12px; left: 6%; height: 4px; background: #2e7d32; z-index: 2; border-radius: 2px; transition: width 0.4s ease; }
+.timeline-step { z-index: 3; text-align: center; width: 25%; position: relative; }
+.step-dot { width: 26px; height: 26px; border-radius: 50%; background: #e0e0e0; border: 3px solid #fff; margin: 0 auto 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; transition: all 0.3s; }
+.timeline-step.active .step-dot { background: #2e7d32; box-shadow: 0 0 0 4px rgba(46,125,50,0.2); }
+.timeline-step.completed .step-dot { background: #2e7d32; }
+.step-label { font-size: 11px; font-weight: 700; color: #555; transition: color 0.3s; }
+.timeline-step.active .step-label { color: #2e7d32; }
+.spinner { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #e47911; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+
+<header style="background:#131921;padding:10px 16px;display:flex;align-items:center;gap:12px">
+  <a href="index.html">
+    <svg width="90" height="28" viewBox="0 0 90 28"><text x="0" y="21" font-family="Arial Black,sans-serif" font-size="20" font-weight="900" fill="white">amazon</text><path d="M5 24 Q45 30 86 24" stroke="#FF9900" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+  </a>
+  <span style="color:#fff;font-size:20px;font-weight:700;flex:1;text-align:center">Your Orders</span>
+  <a href="cart.html" style="color:#fff;text-decoration:none">🛒 Cart</a>
+</header>
+
+<div class="page-wrap">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h1 style="font-size:24px;font-weight:400">Your Orders</h1>
+    <div id="orderCount" style="font-size:14px;color:#555"></div>
+  </div>
+  <div id="ordersContainer"></div>
+</div>
+
+<!-- MODAL: Report Missing -->
+<div class="modal-bg" id="missingModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('missingModal')">✕</button>
+    <h2>📦 Report Missing Product</h2>
+    <input type="hidden" id="missingOrderId">
+    <input type="hidden" id="missingItemName">
+    <p style="font-size:13px;color:#555;margin-bottom:12px">Item: <strong id="missingItemLabel"></strong></p>
+    <label>Issue Type</label>
+    <select id="missingType">
+      <option value="not_received">Item not received</option>
+      <option value="wrong_item">Wrong item delivered</option>
+      <option value="damaged">Item arrived damaged</option>
+      <option value="incomplete">Package incomplete</option>
+    </select>
+    <label>Describe the issue</label>
+    <textarea id="missingDesc" placeholder="Please describe what happened..."></textarea>
+    <button class="submit-btn" onclick="submitMissingReport()">Submit Report</button>
+  </div>
+</div>
+
+<!-- MODAL: Exchange -->
+<div class="modal-bg" id="exchangeModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('exchangeModal')">✕</button>
+    <h2>🔄 Exchange Product</h2>
+    <input type="hidden" id="exchangeOrderId">
+    <input type="hidden" id="exchangeItemPrice">
+    <p style="font-size:13px;color:#555;margin-bottom:4px">Current: <strong id="exchangeCurrentName"></strong></p>
+    <p style="font-size:13px;color:#555;margin-bottom:12px">Select a product at the <strong>same price</strong>:</p>
+    <div id="exchangeList" style="max-height:300px;overflow-y:auto"></div>
+    <label>Reason for Exchange</label>
+    <select id="exchangeReason">
+      <option value="defective">Defective item</option>
+      <option value="wrong_size">Wrong size</option>
+      <option value="not_as_described">Not as described</option>
+      <option value="changed_mind">Changed mind</option>
+    </select>
+    <button class="submit-btn" onclick="submitExchange()" id="exchangeSubmitBtn">Confirm Exchange</button>
+  </div>
+</div>
+
+<!-- MODAL: Cancel & Refund -->
+<div class="modal-bg" id="cancelModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('cancelModal')">✕</button>
+    <h2>❌ Cancel Order & Refund</h2>
+    <input type="hidden" id="cancelOrderId">
+    <p style="font-size:13px;color:#555;margin-bottom:12px">Order: <strong id="cancelOrderLabel"></strong></p>
+    <label>Reason for Cancellation</label>
+    <select id="cancelReason">
+      <option value="changed_mind">Changed my mind</option>
+      <option value="found_cheaper">Found cheaper elsewhere</option>
+      <option value="ordered_by_mistake">Ordered by mistake</option>
+      <option value="delay">Expected delivery too late</option>
+      <option value="other">Other</option>
+    </select>
+    <label>Additional Comments (optional)</label>
+    <textarea id="cancelComment" placeholder="Any additional info..."></textarea>
+    <div style="background:#fff8ee;border:1px solid #FF9900;border-radius:4px;padding:10px;margin-top:12px;font-size:13px">
+      ℹ️ Refund will be processed within <strong>5–7 business days</strong> to your original payment method.
+    </div>
+    <button class="submit-btn" style="background:#c0392b;color:#fff;border-color:#c0392b" onclick="submitCancel()">Confirm Cancellation</button>
+  </div>
+</div>
+
+<!-- MODAL: Rate Product -->
+<div class="modal-bg" id="ratingModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('ratingModal')">✕</button>
+    <h2>⭐ Rate Your Product</h2>
+    <input type="hidden" id="ratingOrderId">
+    <input type="hidden" id="ratingItemIdx">
+    <p style="font-size:13px;color:#555;margin-bottom:8px">Product: <strong id="ratingItemLabel"></strong></p>
+    <label>Your Rating</label>
+    <div class="stars" id="starRow">
+      <span class="star" data-v="1" onclick="setStar(1)">★</span>
+      <span class="star" data-v="2" onclick="setStar(2)">★</span>
+      <span class="star" data-v="3" onclick="setStar(3)">★</span>
+      <span class="star" data-v="4" onclick="setStar(4)">★</span>
+      <span class="star" data-v="5" onclick="setStar(5)">★</span>
+    </div>
+    <div id="starLabel" style="font-size:13px;color:#555;margin-bottom:6px">Click a star to rate</div>
+    <label>Write a Review</label>
+    <textarea id="reviewText" placeholder="Share your experience with this product..."></textarea>
+    <button class="submit-btn" onclick="submitRating()">Submit Review</button>
+  </div>
+</div>
+
+<!-- MODAL: Order Details -->
+<div class="modal-bg" id="detailsModal">
+  <div class="modal" style="max-width: 600px;">
+    <button class="modal-close" onclick="closeModal('detailsModal')">✕</button>
+    <h2 style="font-size: 20px; font-weight: 700; border-bottom: 2px solid var(--amazon-orange); padding-bottom: 8px; margin-bottom: 16px;">🔍 Order Details</h2>
+    <div id="detailsContent"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+/* ── helpers ── */
+function fmt(n){return '₹'+Number(n||0).toLocaleString('en-IN');}
+function payMethodLabel(m){return {upi:'📱 UPI',card:'💳 Card',netbanking:'🏦 Net Banking',cod:'💵 Cash on Delivery',stripe:'💳 Stripe',wallet:'👛 Wallet'}[m]||m||'Unknown';}
+function showToast(msg,dur=2800){const t=document.getElementById('toast');if(t){t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',dur);}}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+async function getOrdersFromAPI() {
+  if (window.Auth && window.Auth.isLoggedIn()) {
+    try {
+      const res = await window.API.ordersAPI.getMyOrders();
+      return res.orders || [];
+    } catch(e) {
+      console.error('API Orders error, falling back:', e);
+    }
+  }
+  return JSON.parse(localStorage.getItem('amazon_orders_local') || '[]');
+}
+
+/* ── render ── */
+async function renderOrders(){
+  const container=document.getElementById('ordersContainer');
+  if(!container) return;
+  
+  container.innerHTML=`<div style="text-align:center;padding:50px"><div class="spinner"></div><p style="margin-top:12px;color:#666;font-size:14px">Fetching your orders securely...</p></div>`;
+  
+  let orders = await getOrdersFromAPI();
+  const archived = JSON.parse(localStorage.getItem('amazon_archived_orders') || '[]');
+  orders = orders.filter(o => !archived.includes(o._id || o.id));
+  
+  document.getElementById('orderCount').textContent = orders.length + ' order(s) placed';
+  
+  if(!orders.length){
+    container.innerHTML=`<div style="background:#fff;border:1px solid #ddd;border-radius:4px;padding:60px;text-align:center">
+      <div style="font-size:72px;margin-bottom:16px">📦</div>
+      <h2 style="font-size:20px;font-weight:400;margin-bottom:8px">No Orders Yet</h2>
+      <p style="color:#555;margin-bottom:20px">Your order history will appear here.</p>
+      <a href="index.html" style="background:#FFD814;border:1px solid #FCD200;border-radius:6px;padding:10px 24px;font-size:14px;font-weight:700;text-decoration:none;color:#000">Start Shopping</a>
+    </div>`;
+    return;
+  }
+  
+  container.innerHTML=orders.map((order,oi)=>{
+    const date=new Date(order.createdAt || order.date).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    const delivDate=new Date(new Date(order.createdAt || order.date).getTime()+5*24*3600*1000).toLocaleDateString('en-IN',{day:'numeric',month:'long'});
+    const items=order.orderItems || order.items || [];
+    const status=order.orderStatus || order.status || 'Confirmed';
+    
+    const isCancelled=status==='cancelled' || status==='Cancelled' || status==='Refunded';
+    const isDelivered=status==='delivered' || status==='Delivered';
+    const canCancel=!isCancelled && !isDelivered && status !== 'shipped' && status !== 'out_for_delivery';
+    
+    // Calculate timeline progress
+    let progressPercent = 0;
+    let stepClass = { placed: 'completed', confirmed: '', shipped: '', delivered: '' };
+    
+    if (status === 'processing') {
+      progressPercent = 5;
+      stepClass.placed = 'active';
+    } else if (status === 'confirmed' || status === 'Confirmed') {
+      progressPercent = 33;
+      stepClass.placed = 'completed';
+      stepClass.confirmed = 'active';
+    } else if (status === 'shipped' || status === 'Shipped') {
+      progressPercent = 66;
+      stepClass.placed = 'completed';
+      stepClass.confirmed = 'completed';
+      stepClass.shipped = 'active';
+    } else if (status === 'out_for_delivery') {
+      progressPercent = 80;
+      stepClass.placed = 'completed';
+      stepClass.confirmed = 'completed';
+      stepClass.shipped = 'completed';
+      stepClass.delivered = 'active';
+    } else if (status === 'delivered' || status === 'Delivered') {
+      progressPercent = 100;
+      stepClass.placed = 'completed';
+      stepClass.confirmed = 'completed';
+      stepClass.shipped = 'completed';
+      stepClass.delivered = 'completed active';
+    }
+
+    const orderIdVal = order._id || order.id;
+    const humanOrderId = order.orderNumber || `AMZ-${orderIdVal.slice(-8).toUpperCase()}`;
+
+    return `<div class="order-card">
+      <div class="order-header">
+        <div style="display:flex;gap:24px;flex-wrap:wrap">
+          <div class="order-meta">ORDER PLACED<br><strong>${date}</strong></div>
+          <div class="order-meta">TOTAL<br><strong>${fmt(order.totalPrice || order.total)}</strong></div>
+          <div class="order-meta">PAYMENT<br><strong>${payMethodLabel(order.paymentMethod)}</strong></div>
+          ${order.shippingAddress?`<div class="order-meta">SHIP TO<br><strong>${order.shippingAddress.fullName || ''}</strong></div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div class="order-meta" style="margin-bottom:4px">ORDER # ${humanOrderId}</div>
+          <span class="status-badge status-${status.charAt(0).toUpperCase() + status.slice(1)}">${status.replace(/_/g,' ')}</span>
+          <a href="#" style="color:#007185;text-decoration:none;font-size:12px;display:block;margin-top:6px;font-weight:600" onclick="viewOrderDetails('${orderIdVal}');return false">View order details</a>
+          ${order.paymentStatus==='refund_pending'?'<div style="font-size:11px;color:#856404;margin-top:4px">Refund processing...</div>':''}
+        </div>
+      </div>
+      <div class="order-body">
+        <div style="font-size:16px;font-weight:700;color:${isCancelled?'#c5221f':isDelivered?'#0a5c1f':'#007600'};margin-bottom:10px">
+          ${isCancelled?'❌ Order Cancelled':isDelivered?'✅ Delivered':'📦 Arriving by '+delivDate}
+        </div>
+        
+        <!-- Interactive progress timeline -->
+        ${!isCancelled ? `
+        <div class="timeline-wrap">
+          <div class="timeline-line"></div>
+          <div class="timeline-fill" style="width: ${progressPercent}%"></div>
+          
+          <div class="timeline-step ${stepClass.placed}">
+            <div class="step-dot">✓</div>
+            <div class="step-label">Ordered</div>
+          </div>
+          <div class="timeline-step ${stepClass.confirmed}">
+            <div class="step-dot">✓</div>
+            <div class="step-label">Confirmed</div>
+          </div>
+          <div class="timeline-step ${stepClass.shipped}">
+            <div class="step-dot">✓</div>
+            <div class="step-label">Shipped</div>
+          </div>
+          <div class="timeline-step ${stepClass.delivered}">
+            <div class="step-dot">✓</div>
+            <div class="step-label">Delivered</div>
+          </div>
+        </div>
+        ` : ''}
+
+        ${items.map((item,ii)=>{
+          return `<div class="order-item">
+            <img src="${item.image||''}" alt="${item.name||''}" style="width:80px;height:80px;object-fit:contain;border:1px solid #eee;border-radius:3px;flex-shrink:0" onerror="this.src='https://via.placeholder.com/80'">
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:500;margin-bottom:4px">${item.name||'Product'}</div>
+              <div style="font-size:13px;color:#555">Qty: ${item.quantity||item.qty||1} · ${fmt((item.price||0)*(item.quantity||item.qty||1))}</div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-yellow" onclick="window.location.href='index.html'">Buy it again</button>
+              ${!isCancelled?`<button class="btn btn-orange" onclick="openMissing('${orderIdVal}','${(item.name||'').replace(/'/g,"\\'")}')">📦 Report Missing</button>`:''}
+              ${!isCancelled&&!isDelivered?`<button class="btn btn-blue" onclick="openExchange('${orderIdVal}',${ii},'${(item.name||'').replace(/'/g,"\\'")}',${item.price||0})">🔄 Exchange</button>`:''}
+              ${isDelivered?`<button class="btn btn-green" onclick="openRating('${orderIdVal}',${ii},'${(item.name||'').replace(/'/g,"\\'")}')">⭐ Rate Product</button>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+        ${canCancel?`<div style="margin-top:12px;text-align:right"><button class="btn btn-red" style="width:auto;padding:8px 20px;font-size:13px" onclick="openCancel('${orderIdVal}')">❌ Cancel Order & Refund</button></div>`:''}
+        ${isCancelled?`<div style="margin-top:12px;text-align:right"><button class="btn" style="width:auto;padding:8px 20px;font-size:13px;border:1px solid #bbb;background:#fff;color:#555" onclick="archiveOrder('${orderIdVal}')">🗑️ Remove from History</button></div>`:''}
+        ${order.paymentStatus==='refunded'?`<div style="margin-top:10px;padding:10px;background:#fff3cd;border-radius:4px;font-size:13px;color:#856404;font-weight:600">💰 Refund Processed — credited to your original payment method.</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── MISSING PRODUCT ── */
+function openMissing(orderId,itemName){
+  document.getElementById('missingOrderId').value=orderId;
+  document.getElementById('missingItemName').value=itemName;
+  document.getElementById('missingItemLabel').textContent=itemName;
+  openModal('missingModal');
+}
+function submitMissingReport(){
+  const orderId=document.getElementById('missingOrderId').value;
+  const type=document.getElementById('missingType').value;
+  const desc=document.getElementById('missingDesc').value.trim();
+  if(!desc){showToast('⚠️ Please describe the issue.');return;}
+  const reports=JSON.parse(localStorage.getItem('amazon_missing_reports')||'[]');
+  reports.push({orderId,type,desc,date:new Date().toISOString()});
+  localStorage.setItem('amazon_missing_reports',JSON.stringify(reports));
+  closeModal('missingModal');
+  document.getElementById('missingDesc').value='';
+  showToast('✅ Missing product report submitted! Our team will contact you within 24 hrs.');
+}
+
+/* ── EXCHANGE ── */
+let selectedExchangeProduct=null;
+function openExchange(orderId,itemIdx,itemName,itemPrice){
+  selectedExchangeProduct=null;
+  document.getElementById('exchangeOrderId').value=orderId+'|'+itemIdx;
+  document.getElementById('exchangeItemPrice').value=itemPrice;
+  document.getElementById('exchangeCurrentName').textContent=itemName;
+  const prods=window.STATIC_PRODUCTS||[];
+  const margin=itemPrice*0.15;
+  const similar=prods.filter(p=>Math.abs(p.price-itemPrice)<=margin&&p.name!==itemName).slice(0,6);
+  const list=document.getElementById('exchangeList');
+  if(!similar.length){
+    list.innerHTML='<p style="font-size:13px;color:#555;text-align:center;padding:20px">No products found at a similar price range.</p>';
+  } else {
+    list.innerHTML=similar.map(p=>`
+      <div class="exchange-item" id="ei_${p._id}" onclick="selectExchangeProduct('${p._id}','${p.name.replace(/'/g,"\\'")}',${p.price})">
+        <img src="${p.images[0]}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/50'">
+        <div><div class="ename">${p.name.substring(0,50)}</div><div class="eprice">${fmt(p.price)}</div></div>
+      </div>`).join('');
+  }
+  openModal('exchangeModal');
+}
+function selectExchangeProduct(id,name,price){
+  document.querySelectorAll('.exchange-item').forEach(el=>el.classList.remove('selected'));
+  const el=document.getElementById('ei_'+id);
+  if(el)el.classList.add('selected');
+  selectedExchangeProduct={id,name,price};
+}
+async function submitExchange(){
+  if(!selectedExchangeProduct){showToast('⚠️ Please select a product to exchange with.');return;}
+  const [orderId,itemIdx]=document.getElementById('exchangeOrderId').value.split('|');
+  
+  const exchanges=JSON.parse(localStorage.getItem('amazon_exchanges')||'[]');
+  exchanges.push({orderId,newProduct:selectedExchangeProduct.name,date:new Date().toISOString()});
+  localStorage.setItem('amazon_exchanges',JSON.stringify(exchanges));
+  closeModal('exchangeModal');
+  showToast(`✅ Exchange requested! Our agent will pick up the current item and deliver "${selectedExchangeProduct.name}".`);
+}
+
+/* ── CANCEL & REFUND ── */
+function openCancel(orderId){
+  document.getElementById('cancelOrderId').value=orderId;
+  document.getElementById('cancelOrderLabel').textContent='#'+orderId.substring(0,8).toUpperCase();
+  document.getElementById('cancelComment').value='';
+  openModal('cancelModal');
+}
+async function submitCancel(){
+  const orderId=document.getElementById('cancelOrderId').value;
+  try {
+    const res = await window.API.ordersAPI.cancel(orderId);
+    closeModal('cancelModal');
+    showToast('✅ Order cancelled successfully! Refund request filed.');
+    renderOrders();
+  } catch(e) {
+    showToast('⚠️ Failed to cancel order: ' + e.message);
+  }
+}
+
+/* ── ARCHIVE ORDER ── */
+function archiveOrder(orderId) {
+  if (confirm('Are you sure you want to remove this order from your visible history?')) {
+    const archived = JSON.parse(localStorage.getItem('amazon_archived_orders') || '[]');
+    archived.push(orderId);
+    localStorage.setItem('amazon_archived_orders', JSON.stringify(archived));
+    showToast('🗑️ Order removed from visible history.');
+    renderOrders();
+  }
+}
+
+/* ── RATING ── */
+let currentStars=0;
+function setStar(v){
+  currentStars=v;
+  document.querySelectorAll('.star').forEach(s=>{
+    s.classList.toggle('lit',parseInt(s.dataset.v)<=v);
+  });
+  const labels=['','😞 Bad','😐 Fair','🙂 OK','😊 Good','🤩 Excellent!'];
+  document.getElementById('starLabel').textContent=labels[v];
+}
+function openRating(orderId,itemIdx,itemName){
+  currentStars=0;
+  document.getElementById('ratingOrderId').value=orderId+'|'+itemIdx;
+  document.getElementById('ratingItemLabel').textContent=itemName;
+  document.getElementById('reviewText').value='';
+  document.querySelectorAll('.star').forEach(s=>s.classList.remove('lit'));
+  document.getElementById('starLabel').textContent='Click a star to rate';
+  openModal('ratingModal');
+}
+async function submitRating(){
+  if(!currentStars){showToast('⚠️ Please select a star rating.');return;}
+  const [orderId,itemIdx]=document.getElementById('ratingOrderId').value.split('|');
+  const text=document.getElementById('reviewText').value.trim()||'Good product!';
+  
+  try {
+    const orders = await getOrdersFromAPI();
+    const order = orders.find(o => (o._id || o.id) === orderId);
+    if (!order) return;
+    const item = (order.orderItems || order.items)[parseInt(itemIdx)];
+    if (!item) return;
+    
+    // Submit review direct to database catalog!
+    await window.API.productsAPI.addReview(item.product, {
+      rating: currentStars,
+      title: 'Customer Review',
+      comment: text
+    });
+    
+    closeModal('ratingModal');
+    showToast('⭐ Thank you for your review! It is published on the product detail page.');
+    renderOrders();
+  } catch(e) {
+    showToast('⚠️ Failed to submit review: ' + e.message);
+  }
+}
+
+/* ── VIEW ORDER DETAILS ── */
+async function viewOrderDetails(orderId) {
+  const orders = await getOrdersFromAPI();
+  const order = orders.find(o => (o._id || o.id) === orderId);
+  if (!order) {
+    showToast('⚠️ Order details not found.');
+    return;
+  }
+  
+  const date = new Date(order.createdAt || order.date).toLocaleString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const status = order.orderStatus || order.status || 'Confirmed';
+  const humanOrderId = order.orderNumber || `AMZ-${order._id.toString().slice(-8).toUpperCase()}`;
+  
+  const itemsPrice = order.itemsPrice || (order.totalPrice ? order.totalPrice / 1.18 : 0);
+  const taxPrice = order.taxPrice || (order.totalPrice ? order.totalPrice - itemsPrice : 0);
+  const shippingPrice = order.shippingPrice || 0;
+  
+  let addrHtml = '<em>No address available</em>';
+  if (order.shippingAddress) {
+    const s = order.shippingAddress;
+    addrHtml = `
+      <strong>${s.fullName}</strong><br>
+      ${s.street}<br>
+      ${s.city}, ${s.state} — ${s.pincode}<br>
+      📞 Mobile: +91 ${s.phone}
+    `;
+  }
+  
+  let itemsHtml = (order.orderItems || order.items || []).map(item => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #eee;">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <img src="${item.image || 'https://via.placeholder.com/50'}" style="width:40px; height:40px; object-fit:contain; border:1px solid #eee; border-radius:4px;" onerror="this.src='https://via.placeholder.com/50'">
+        <div>
+          <div style="font-size:13px; font-weight:600;">${item.name}</div>
+          <div style="font-size:11px; color:#666;">Qty: ${item.quantity || item.qty || 1} · ${fmt(item.price)} each</div>
+        </div>
+      </div>
+      <div style="font-size:13px; font-weight:700;">${fmt((item.price || 0) * (item.quantity || item.qty || 1))}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('detailsContent').innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+      <div>
+        <h4 style="font-size:14px; color:#e47911; margin-bottom:6px; font-weight:700;">📍 Shipping Address</h4>
+        <div style="font-size:13px; color:#333; line-height:1.5; background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #eee;">
+          ${addrHtml}
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:14px; color:#0066c0; margin-bottom:6px; font-weight:700;">💳 Payment & Status</h4>
+        <div style="font-size:13px; color:#333; line-height:1.5; background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #eee;">
+          <strong>Order #</strong> ${humanOrderId}<br>
+          <strong>Placed on:</strong> ${date}<br>
+          <strong>Method:</strong> ${payMethodLabel(order.paymentMethod)}<br>
+          <strong>Payment Status:</strong> <span class="status-badge status-${order.paymentStatus || 'pending'}" style="padding:2px 8px; font-size:11px;">${order.paymentStatus || 'Pending'}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin-bottom:20px;">
+      <h4 style="font-size:14px; color:#333; margin-bottom:8px; font-weight:700;">📦 Order Items</h4>
+      <div style="border:1px solid #eee; border-radius:6px; padding:0 12px; background:#fff;">
+        ${itemsHtml}
+      </div>
+    </div>
+    
+    <div style="background:#f5f5f5; border-radius:6px; padding:16px; border:1px solid #e5e5e5;">
+      <h4 style="font-size:14px; color:#333; margin-bottom:10px; font-weight:700;">💵 Price Summary</h4>
+      <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+        <span>Items Subtotal:</span><span>${fmt(itemsPrice)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+        <span>Shipping & Delivery:</span><span style="color:#007600;">${shippingPrice === 0 ? 'FREE' : fmt(shippingPrice)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
+        <span>GST Tax (18%):</span><span>${fmt(taxPrice)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; color:#B12704; border-top:1px solid #ccc; padding-top:8px;">
+        <span>Grand Total:</span><span>${fmt(order.totalPrice || order.total)}</span>
+      </div>
+    </div>
+  `;
+  openModal('detailsModal');
+}
+
+/* close on bg click */
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');});
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  /* load static products for exchange */
+  if(!window.STATIC_PRODUCTS){
+    const s=document.createElement('script');
+    s.src='js/static-data.js';
+    s.onload=()=>renderOrders();
+    document.head.appendChild(s);
+  } else { renderOrders(); }
+  renderOrders();
+});
+</script>
+</body>
+</html>

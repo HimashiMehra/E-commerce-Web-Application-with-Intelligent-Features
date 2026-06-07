@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Your Wishlist — Amazon.in</title>
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<header style="background:var(--amazon-dark)">
+  <div class="header-main">
+    <a href="index.html" class="logo"><svg width="95" height="29" viewBox="0 0 95 29" fill="none"><text x="0" y="22" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="white">amazon</text><path d="M5 26 Q47 32 90 26" stroke="#FF9900" stroke-width="3" fill="none" stroke-linecap="round"/></svg><span class="logo-country">.in</span></a>
+    <div style="flex:1;text-align:center;color:#fff;font-size:20px;font-weight:700">❤️ Your Wishlist</div>
+    <div class="header-item cart-item-nav" style="color:#fff" onclick="window.location.href='cart.html'">
+      <div class="cart-icon-wrap">🛒<span class="cart-count" id="cartBadge" style="display:none">0</span></div>
+      <span style="font-weight:700;font-size:13px">Cart</span>
+    </div>
+  </div>
+</header>
+
+<main class="main-content" style="padding-top:24px">
+  <div id="wishlistContainer"><div class="spinner" style="margin:60px auto"></div></div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script>
+function showToast(msg,type='success'){const c=document.getElementById('toast-container');const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;c.appendChild(t);requestAnimationFrame(()=>{setTimeout(()=>t.classList.add('visible'),10)});setTimeout(()=>{t.classList.remove('visible');setTimeout(()=>t.remove(),400)},2800);}
+function starsHTML(r,c){const f=Math.floor(r),h=r%1>=.5?1:0,e=5-f-h;return `<div class="stars"><span class="stars-icons">${'★'.repeat(f)}${h?'½':''}${'☆'.repeat(e)}</span><span class="stars-count">${Number(c).toLocaleString()}</span></div>`;}
+
+async function loadWishlist(){
+  const el=document.getElementById('wishlistContainer');
+  const ids=JSON.parse(localStorage.getItem('amazon_wishlist')||'[]');
+  if(!ids.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-state-icon">❤️</div><h2>Your wishlist is empty</h2><p>Save items you love to your wishlist.</p><a href="index.html" class="btn btn-primary btn-lg">Start Shopping</a></div>`;
+    return;
+  }
+  el.innerHTML='<div class="spinner" style="margin:40px auto"></div>';
+  const products=[];
+  for(const id of ids.slice(0,20)){
+    try{const d=await window.API.productsAPI.getById(id);products.push(d.product);}catch(_){}
+  }
+  if(!products.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">❤️</div><h2>No products found</h2><a href="index.html" class="btn btn-primary">Shop Now</a></div>';return;}
+  el.innerHTML=`<h1 style="font-size:22px;margin-bottom:20px">Your Wishlist (${products.length} items)</h1>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">
+  ${products.map(p=>`<div class="card" style="padding:12px;display:flex;flex-direction:column;position:relative">
+    <button style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:18px;cursor:pointer" onclick="removeWishlist('${p._id}',this)" title="Remove">❤️</button>
+    <img src="${p.images&&p.images[0]}" alt="${p.name}" style="width:100%;height:180px;object-fit:contain;margin-bottom:10px" onclick="window.location.href='product.html?id=${p._id}'" style="cursor:pointer" onerror="this.src='https://via.placeholder.com/200'">
+    <div style="font-size:14px;margin-bottom:6px;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.name}</div>
+    ${starsHTML(p.rating,p.numReviews||0)}
+    <div style="font-weight:700;font-size:16px;margin:6px 0">₹${Number(p.price).toLocaleString('en-IN')}</div>
+    <button class="btn btn-primary btn-full" onclick="addToCartWishlist('${p._id}')">Add to Cart</button>
+  </div>`).join('')}
+  </div>`;
+}
+
+async function addToCartWishlist(id){await window.addToCart(id,1);showToast('Added to cart! 🛒');}
+
+function removeWishlist(id,btn){
+  const wl=JSON.parse(localStorage.getItem('amazon_wishlist')||'[]');
+  const idx=wl.indexOf(String(id));
+  if(idx>-1){wl.splice(idx,1);localStorage.setItem('amazon_wishlist',JSON.stringify(wl));}
+  btn.closest('.card').remove();
+  showToast('Removed from wishlist');
+  if(window.Auth&&window.Auth.isLoggedIn()){try{window.API.authAPI.toggleWishlist(id);}catch(_){}}
+}
+
+document.addEventListener('DOMContentLoaded',()=>loadWishlist());
+</script>
+</body>
+</html>

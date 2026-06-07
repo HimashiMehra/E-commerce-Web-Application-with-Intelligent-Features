@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Gift Cards — Amazon.in</title>
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  .gc-hero { background: linear-gradient(135deg, #131921 0%, #232f3e 100%); color:#fff; padding:60px 20px; text-align:center; border-radius:8px; margin-top:20px; }
+  .gc-hero h1 { font-size:36px; margin-bottom:16px; color:#FF9900; }
+  .gc-hero p { font-size:18px; color:#ccc; max-width:600px; margin:0 auto; }
+  .gc-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:24px; margin-top:40px; }
+  .gc-card { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08); transition:transform 0.2s; }
+  .gc-card:hover { transform: translateY(-5px); box-shadow:0 8px 24px rgba(0,0,0,0.12); }
+  .gc-card img { width:100%; height:160px; object-fit:cover; }
+  .gc-card-body { padding:20px; }
+  .gc-card h3 { font-size:18px; margin-bottom:8px; }
+  .gc-card p { font-size:14px; color:#666; margin-bottom:16px; }
+  .amt-btn { background:#f0f0f0; border:1px solid #ddd; padding:8px 12px; border-radius:4px; margin-right:6px; cursor:pointer; }
+  .amt-btn:hover { background:#e8e8e8; }
+</style>
+</head>
+<body style="background:#f8f8f8">
+<div id="toast-container"></div>
+<header style="background:var(--amazon-dark)">
+  <div class="header-main">
+    <a href="index.html" class="logo"><svg width="95" height="29" viewBox="0 0 95 29" fill="none"><text x="0" y="22" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="white">amazon</text><path d="M5 26 Q47 32 90 26" stroke="#FF9900" stroke-width="3" fill="none" stroke-linecap="round"/></svg><span class="logo-country">.in</span></a>
+    <div style="flex:1;text-align:center;color:#fff;font-size:20px;font-weight:700">Gift Cards</div>
+    <div class="header-item cart-item-nav" style="color:#fff" onclick="window.location.href='cart.html'">🛒 Cart</div>
+  </div>
+</header>
+<main style="max-width:1100px; margin:0 auto; padding:0 20px 40px;">
+  <div class="gc-hero">
+    <h1>Amazon Gift Cards</h1>
+    <p>The perfect gift for any occasion. Choose from physical, eGift, or print-at-home cards.</p>
+  </div>
+  
+  <h2 style="margin-top:40px; font-size:24px;">Popular eGift Cards</h2>
+  <div class="gc-grid">
+    <div class="gc-card">
+      <img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=500&h=300&fit=crop" alt="Birthday">
+      <div class="gc-card-body">
+        <h3>Happy Birthday</h3>
+        <p>Send an instant gift directly to their email.</p>
+        <div style="margin-bottom:16px">
+          <button class="amt-btn" onclick="document.getElementById('amt1').value='500'">₹500</button>
+          <button class="amt-btn" onclick="document.getElementById('amt1').value='1000'">₹1000</button>
+          <button class="amt-btn" onclick="document.getElementById('amt1').value='5000'">₹5000</button>
+        </div>
+        <input type="number" id="amt1" placeholder="Amount (₹)" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
+        <button class="btn btn-primary btn-full" onclick="buyGiftCard('amt1')">Buy Now</button>
+      </div>
+    </div>
+    <div class="gc-card">
+      <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=500&h=300&fit=crop" alt="Thank You">
+      <div class="gc-card-body">
+        <h3>Thank You</h3>
+        <p>Show your appreciation with a digital gift.</p>
+        <div style="margin-bottom:16px">
+          <button class="amt-btn" onclick="document.getElementById('amt2').value='500'">₹500</button>
+          <button class="amt-btn" onclick="document.getElementById('amt2').value='1000'">₹1000</button>
+          <button class="amt-btn" onclick="document.getElementById('amt2').value='5000'">₹5000</button>
+        </div>
+        <input type="number" id="amt2" placeholder="Amount (₹)" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
+        <button class="btn btn-primary btn-full" onclick="buyGiftCard('amt2')">Buy Now</button>
+      </div>
+    </div>
+    <div class="gc-card">
+      <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&h=300&fit=crop" alt="Amazon Pay">
+      <div class="gc-card-body">
+        <h3>Amazon Pay</h3>
+        <p>Add balance to shop across Amazon.in instantly.</p>
+        <div style="margin-bottom:16px">
+          <button class="amt-btn" onclick="document.getElementById('amt3').value='500'">₹500</button>
+          <button class="amt-btn" onclick="document.getElementById('amt3').value='1000'">₹1000</button>
+          <button class="amt-btn" onclick="document.getElementById('amt3').value='5000'">₹5000</button>
+        </div>
+        <input type="number" id="amt3" placeholder="Amount (₹)" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px;">
+        <button class="btn btn-primary btn-full" onclick="buyGiftCard('amt3')">Buy Now</button>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+function showToast(msg,type='success'){const c=document.getElementById('toast-container');const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;c.appendChild(t);requestAnimationFrame(()=>{setTimeout(()=>t.classList.add('visible'),10)});setTimeout(()=>{t.classList.remove('visible');setTimeout(()=>t.remove(),400)},2800);}
+function buyGiftCard(id){
+  const amt = document.getElementById(id).value;
+  if(!amt || amt <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+  showToast(`✅ Gift Card for ₹${amt} added to your account!`);
+  document.getElementById(id).value = '';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon.in — Spend less. Smile more.</title>
+<meta name="description" content="Amazon India — Shop electronics, books, fashion, home & kitchen, sports, beauty and more.">
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+<div id="page-progress"></div>
+<div id="toast-container"></div>
+<div class="cart-backdrop" id="cartBackdrop" onclick="closeCart()"></div>
+
+<!-- Cart Sidebar -->
+<div class="cart-modal" id="cartModal">
+  <div class="cart-header"><h2>🛒 Shopping Cart</h2><button class="cart-close-btn" onclick="closeCart()">✕</button></div>
+  <div class="cart-items-list" id="cartItemsList"></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div style="font-size:16px;margin-bottom:12px">Subtotal (<span id="cartItemCount">0</span> items): <strong id="cartTotal">₹0</strong></div>
+    <button class="btn btn-primary btn-full" style="font-size:15px;padding:12px" onclick="goToCheckout()">Proceed to checkout</button>
+    <p style="font-size:12px;color:#555;text-align:center;margin-top:8px">✔ This order is eligible for FREE Delivery</p>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="product-modal" id="productModal">
+  <div class="product-modal-backdrop" onclick="closeProductModal()"></div>
+  <div class="product-modal-content">
+    <button class="pm-close" onclick="closeProductModal()">✕</button>
+    <div class="pm-body" id="pmBody"></div>
+  </div>
+</div>
+
+<!-- Prime Modal -->
+<div class="prime-modal" id="primeModal">
+  <div class="prime-modal-backdrop" onclick="document.getElementById('primeModal').classList.remove('open')"></div>
+  <div class="prime-modal-content">
+    <button class="prime-modal-close" onclick="document.getElementById('primeModal').classList.remove('open')">✕</button>
+    <div style="font-size:48px;margin-bottom:8px">⭐</div>
+    <div style="font-size:32px;font-weight:900;color:var(--amazon-orange);margin-bottom:8px">Amazon Prime</div>
+    <div style="font-size:16px;color:#ddd;margin-bottom:24px">FREE fast delivery, exclusive deals & more</div>
+    <div style="margin-bottom:24px">
+      <div class="prime-benefit"><span class="prime-benefit-icon">🚀</span><div><strong>FREE & Fast Delivery</strong><br><span style="font-size:12px;color:#bbb">Get FREE delivery on millions of items</span></div></div>
+      <div class="prime-benefit"><span class="prime-benefit-icon">🎬</span><div><strong>Prime Video</strong><br><span style="font-size:12px;color:#bbb">Stream thousands of movies & shows</span></div></div>
+      <div class="prime-benefit"><span class="prime-benefit-icon">🎵</span><div><strong>Prime Music</strong><br><span style="font-size:12px;color:#bbb">Ad-free music streaming</span></div></div>
+      <div class="prime-benefit"><span class="prime-benefit-icon">🔥</span><div><strong>Exclusive Deals</strong><br><span style="font-size:12px;color:#bbb">Early access to lightning deals</span></div></div>
+    </div>
+    <button onclick="showToast('Starting your 30-day FREE Prime trial! 🎉');document.getElementById('primeModal').classList.remove('open')" style="background:var(--amazon-yellow);border:none;border-radius:24px;padding:14px 40px;font-size:18px;font-weight:700;cursor:pointer;color:#111;width:100%;margin-bottom:12px">Try Prime FREE for 30 days</button>
+    <div style="font-size:13px;color:#aaa">Then ₹1,499/month. Cancel anytime.</div>
+  </div>
+</div>
+
+<!-- Location Modal -->
+<div class="location-modal" id="locationModal">
+  <button style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:20px;cursor:pointer" onclick="document.getElementById('locationModal').classList.remove('open')">✕</button>
+  <h3>📍 Choose your location</h3>
+  <p style="font-size:13px;color:#555;margin-bottom:10px">Delivery options and speeds may vary for different locations.</p>
+  <input type="text" id="locationInput" class="form-input" placeholder="Enter PIN code" value="400001" style="margin-bottom:10px">
+  <button class="btn btn-primary btn-full" onclick="applyLocation()">Apply</button>
+</div>
+
+<!-- AI Assistant -->
+<div class="ai-panel">
+  <div class="ai-chat" id="aiChat">
+    <div class="ai-chat-header">
+      <h3>✨ AI Shopping Assistant</h3>
+      <button class="ai-chat-close" onclick="toggleAI()">✕</button>
+    </div>
+    <div class="ai-messages" id="aiMessages">
+      <div class="ai-msg bot">👋 Hi! I'm your AI shopping assistant! Ask me about products, deals, gift ideas, or recommendations!</div>
+    </div>
+    <div class="ai-quick-btns">
+      <button class="ai-quick-btn" onclick="quickAsk('Best electronics deals today?')">🔥 Today's Deals</button>
+      <button class="ai-quick-btn" onclick="quickAsk('Gift ideas under ₹5000?')">🎁 Gift Ideas</button>
+      <button class="ai-quick-btn" onclick="quickAsk('Compare headphones for me')">🎧 Compare</button>
+      <button class="ai-quick-btn" onclick="quickAsk('Best rated products?')">⭐ Top Rated</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendAI()">
+      <button class="ai-send" id="aiSendBtn" onclick="sendAI()">Send</button>
+    </div>
+  </div>
+  <button class="ai-toggle" onclick="toggleAI()">✨ AI Assistant</button>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a href="#" onclick="filterByCategory('Electronics');return false">Shop Best Sellers</a><span style="opacity:.4">|</span>
+  <a href="#" onclick="showDeals();return false">Today's Deals</a><span style="opacity:.4">|</span>
+  <a href="gift-cards.html">Gift Cards</a><span style="opacity:.4">|</span>
+  <a href="help.html">Help</a>
+  <span style="color:#666">🇮🇳 IN ▾</span>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-main">
+    <div class="logo" onclick="showHome()">
+      <svg width="95" height="29" viewBox="0 0 95 29" fill="none">
+        <text x="0" y="22" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="white">amazon</text>
+        <path d="M5 26 Q47 32 90 26" stroke="#FF9900" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <text x="72" y="23" font-family="Arial,sans-serif" font-size="11" fill="#FF9900">▲</text>
+      </svg>
+      <span class="logo-country">.in</span>
+    </div>
+    <div class="deliver-to" onclick="document.getElementById('locationModal').classList.toggle('open')">
+      <span class="deliver-label">📍 Deliver to</span>
+      <span class="deliver-location"><strong id="deliverCity">Mumbai</strong> <span style="font-size:10px" id="deliverPin">400001</span></span>
+    </div>
+    <div class="search-wrapper">
+      <div class="search-bar">
+        <select class="search-category" id="searchCategory">
+          <option>All</option><option>Electronics</option><option>Books</option>
+          <option>Clothing</option><option>Home &amp; Kitchen</option>
+          <option>Sports</option><option>Beauty</option><option>Toys</option><option>Automotive</option>
+        </select>
+        <input class="search-input" id="searchInput" type="text" placeholder="Search Amazon.in" autocomplete="off"
+          oninput="handleSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="search-btn" onclick="doSearch()">🔍</button>
+      </div>
+      <div class="search-suggestions" id="searchSuggestions"></div>
+    </div>
+    <div class="header-right">
+      <div class="account-wrapper">
+        <div class="header-item" style="cursor:pointer">
+          <span class="line1" id="greetLine">Hello, Sign in</span>
+          <span class="line2">Account &amp; Lists ▾</span>
+        </div>
+        <div class="account-dropdown">
+          <button id="navSignInBtn" class="btn btn-primary btn-full" onclick="window.location.href='login.html'">Sign in</button>
+          <p style="font-size:13px;text-align:center;margin:8px 0">New customer? <a href="register.html" style="color:var(--amazon-link)">Start here</a></p>
+          <div class="acc-sections">
+            <div class="acc-section">
+              <h4>Your Lists</h4>
+              <a href="wishlist.html">Wish List</a>
+            </div>
+            <div class="acc-section">
+              <h4>Your Account</h4>
+              <a href="orders.html">Orders</a>
+              <a id="adminNavLink" href="admin.html" style="display:none">Admin Panel</a>
+              <a id="navSignOutBtn" href="#" onclick="window.Auth.doLogout();return false" style="display:none">Sign Out</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="header-item returns-item" onclick="window.location.href='orders.html'">
+        <span class="line1">Returns</span><span class="line2">&amp; Orders</span>
+      </div>
+      <div class="header-item cart-item-nav" onclick="openCart()">
+        <div class="cart-icon-wrap">🛒<span class="cart-count" id="cartBadge" style="display:none">0</span></div>
+        <span style="font-weight:700;font-size:13px">Cart</span>
+      </div>
+    </div>
+  </div>
+  <nav class="nav-bar">
+    <div class="nav-bar-inner">
+      <div class="nav-item all" onclick="filterByCategory('all')">☰ All</div>
+      <div class="nav-item" onclick="filterByCategory('Electronics')">Electronics</div>
+      <div class="nav-item" onclick="filterByCategory('Books')">Books</div>
+      <div class="nav-item" onclick="filterByCategory('Clothing')">Fashion</div>
+      <div class="nav-item" onclick="filterByCategory('Home &amp; Kitchen')">Home &amp; Kitchen</div>
+      <div class="nav-item" onclick="filterByCategory('Sports')">Sports</div>
+      <div class="nav-item" onclick="filterByCategory('Beauty')">Beauty</div>
+      <div class="nav-item" onclick="filterByCategory('Toys')">Toys &amp; Games</div>
+      <div class="nav-item" onclick="showDeals()">Today's Deals</div>
+      <div class="nav-item" style="color:var(--amazon-yellow);font-weight:700" onclick="document.getElementById('primeModal').classList.add('open')">Prime ▸</div>
+      <div class="nav-item" onclick="window.location.href='orders.html'">Orders</div>
+      <div class="nav-item" onclick="window.location.href='wishlist.html'">Wishlist</div>
+    </div>
+  </nav>
+</header>
+
+<!-- MAIN -->
+<main id="main-content">
+
+  <!-- HOME PAGE -->
+  <div id="homePage">
+    <div class="hero">
+      <div class="carousel-track" id="carouselTrack"></div>
+      <button class="carousel-btn prev" onclick="prevSlide()">&#8249;</button>
+      <button class="carousel-btn next" onclick="nextSlide()">&#8250;</button>
+      <div class="carousel-dots" id="carouselDots"></div>
+    </div>
+    <div class="main-content" style="padding-top:16px">
+      <!-- Top category cards + sign in -->
+      <div class="top-cards-grid">
+        <div class="card reveal" style="display:flex;flex-direction:column;justify-content:space-between">
+          <div>
+            <h2 style="font-size:18px;font-weight:700;margin-bottom:12px">Sign in for the best experience</h2>
+            <button class="btn btn-primary btn-full" onclick="window.location.href='login.html'">Sign in securely</button>
+          </div>
+          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=160&fit=crop&q=80" alt="Shopping" style="width:100%;height:130px;object-fit:cover;border-radius:4px;margin-top:10px">
+        </div>
+        <div class="card reveal" style="cursor:pointer" onclick="filterByCategory('Electronics')">
+          <h2 class="section-title" style="margin-bottom:10px">Electronics</h2>
+          <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=160&fit=crop&q=80" alt="Electronics" style="width:100%;height:150px;object-fit:cover;border-radius:4px">
+          <a class="section-link" style="display:block;margin-top:10px">Shop now</a>
+        </div>
+        <div class="card reveal" style="cursor:pointer" onclick="filterByCategory('Home &amp; Kitchen')">
+          <h2 class="section-title" style="margin-bottom:10px">Home &amp; Kitchen</h2>
+          <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=160&fit=crop&q=80" alt="Home" style="width:100%;height:150px;object-fit:cover;border-radius:4px">
+          <a class="section-link" style="display:block;margin-top:10px">Shop now</a>
+        </div>
+        <div class="card reveal" style="cursor:pointer" onclick="filterByCategory('Clothing')">
+          <h2 class="section-title" style="margin-bottom:10px">Fashion</h2>
+          <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&h=160&fit=crop&q=80" alt="Fashion" style="width:100%;height:150px;object-fit:cover;border-radius:4px">
+          <a class="section-link" style="display:block;margin-top:10px">Shop now</a>
+        </div>
+      </div>
+
+      <!-- Today's Deals -->
+      <div class="card reveal">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+          <h2 class="section-title">Today's Deals</h2>
+          <a class="section-link" onclick="showDeals()">See all deals</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:13px;color:#555">
+          <span>🕐 Ends in:</span>
+          <span id="dealTimer" style="font-weight:700;color:var(--amazon-red);font-size:14px;font-family:monospace">08:45:22</span>
+        </div>
+        <div class="deals-grid" id="dealsGrid"></div>
+      </div>
+
+      <!-- Best Sellers -->
+      <div class="card reveal">
+        <div style="display:flex;align-items:baseline;justify-content:space-between"><h2 class="section-title">Best Sellers</h2><a class="section-link" onclick="filterByCategory('all')">See all</a></div>
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-btn prev" onclick="scrollSection('bestSellers',-1)">&#8249;</button>
+          <div class="h-scroll" id="bestSellers"></div>
+          <button class="h-scroll-btn next" onclick="scrollSection('bestSellers',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <!-- Banner Row -->
+      <div class="banner-row reveal">
+        <div class="banner-card" onclick="filterByCategory('Electronics')">
+          <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=800&h=250&fit=crop&q=80" alt="Tech">
+          <div class="banner-text"><div class="banner-title">🔥 Tech Deals</div><div class="banner-sub">Shop now →</div></div>
+        </div>
+        <div class="banner-card" onclick="filterByCategory('Books')">
+          <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=250&fit=crop&q=80" alt="Books">
+          <div class="banner-text"><div class="banner-title">📚 Books</div><div class="banner-sub">Shop now →</div></div>
+        </div>
+      </div>
+
+      <!-- Recommended -->
+      <div class="card reveal">
+        <div style="display:flex;align-items:baseline;justify-content:space-between"><h2 class="section-title">Recommended for you</h2><a class="section-link" onclick="filterByCategory('all')">See all</a></div>
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-btn prev" onclick="scrollSection('recommended',-1)">&#8249;</button>
+          <div class="h-scroll" id="recommended"></div>
+          <button class="h-scroll-btn next" onclick="scrollSection('recommended',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <!-- Shop by Category -->
+      <div class="card reveal">
+        <h2 class="section-title" style="margin-bottom:14px">Shop by Category</h2>
+        <div class="category-grid" id="categoryGrid"></div>
+      </div>
+
+      <!-- New Arrivals -->
+      <div class="card reveal">
+        <div style="display:flex;align-items:baseline;justify-content:space-between"><h2 class="section-title">New Arrivals</h2><a class="section-link" onclick="filterByCategory('all')">See all</a></div>
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-btn prev" onclick="scrollSection('newArrivals',-1)">&#8249;</button>
+          <div class="h-scroll" id="newArrivals"></div>
+          <button class="h-scroll-btn next" onclick="scrollSection('newArrivals',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <!-- Prime Banner -->
+      <div class="card reveal" style="background:linear-gradient(135deg,#232f3e 0%,#131921 100%);color:#fff;text-align:center;padding:32px">
+        <div style="font-size:32px;margin-bottom:8px">★ Amazon Prime</div>
+        <p style="font-size:16px;color:#ddd;margin-bottom:16px">FREE fast delivery, exclusive deals, movies, music, and more</p>
+        <button onclick="document.getElementById('primeModal').classList.add('open')" style="background:var(--amazon-yellow);border:none;border-radius:20px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer">Try Prime FREE for 30 days</button>
+        <p style="font-size:12px;color:#aaa;margin-top:10px">Cancel anytime. ₹1,499/month after trial.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS PAGE -->
+  <div id="resultsPage" style="display:none">
+    <div class="main-content" style="padding-top:16px">
+      <div class="results-layout">
+        <div class="filter-sidebar">
+          <div class="filter-section">
+            <h3>Department</h3>
+            <div id="deptFilters"></div>
+          </div>
+          <div class="filter-section">
+            <h3>Price</h3>
+            <label class="filter-option"><input type="radio" name="price" value="all" checked onchange="applyFilters()"> Any Price</label>
+            <label class="filter-option"><input type="radio" name="price" value="0-2000" onchange="applyFilters()"> Under ₹2,000</label>
+            <label class="filter-option"><input type="radio" name="price" value="2000-5000" onchange="applyFilters()"> ₹2,000–₹5,000</label>
+            <label class="filter-option"><input type="radio" name="price" value="5000-15000" onchange="applyFilters()"> ₹5,000–₹15,000</label>
+            <label class="filter-option"><input type="radio" name="price" value="15000-50000" onchange="applyFilters()"> ₹15,000–₹50,000</label>
+            <label class="filter-option"><input type="radio" name="price" value="50000+" onchange="applyFilters()"> ₹50,000 &amp; Above</label>
+          </div>
+          <div class="filter-section">
+            <h3>Avg. Customer Review</h3>
+            <a href="#" onclick="setStarFilter(4);return false" style="display:flex;align-items:center;gap:6px;color:var(--amazon-link);font-size:13px;margin-bottom:4px"><span style="color:#FF9900">★★★★</span>☆ &amp; Up</a>
+            <a href="#" onclick="setStarFilter(3);return false" style="display:flex;align-items:center;gap:6px;color:var(--amazon-link);font-size:13px;margin-bottom:4px"><span style="color:#FF9900">★★★</span>☆☆ &amp; Up</a>
+            <a href="#" onclick="setStarFilter(0);return false" style="display:flex;align-items:center;gap:6px;color:var(--amazon-link);font-size:13px">All Reviews</a>
+          </div>
+        </div>
+        <div class="results-main">
+          <div class="results-info" id="resultsInfo"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:#fff;padding:10px 16px;border-radius:4px;border:1px solid #eee">
+            <span style="font-size:14px;color:#555">Sort by:</span>
+            <select id="sortSelect" onchange="applyFilters()" style="border:1px solid #ccc;border-radius:3px;padding:6px 10px;font-size:14px;background:#f3f3f3">
+              <option value="featured">Featured</option>
+              <option value="priceAsc">Price: Low to High</option>
+              <option value="priceDesc">Price: High to Low</option>
+              <option value="rating">Avg. Customer Review</option>
+              <option value="newest">Newest Arrivals</option>
+            </select>
+          </div>
+          <div class="products-grid" id="resultsGrid"></div>
+          <div id="noResults" style="display:none">
+            <div class="empty-state"><div class="empty-state-icon">🔍</div><h2>No results found</h2><p>Try adjusting your search or filter.</p><button class="btn btn-primary" onclick="showHome()">Go to Homepage</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEALS PAGE -->
+  <div id="dealsPage" style="display:none">
+    <div class="main-content" style="padding-top:16px">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h1 class="section-title">🔥 Today's Deals</h1>
+          <span style="font-size:14px;color:#555">Ends in: <strong id="dealsPageTimer" style="color:var(--amazon-red);font-family:monospace">08:45:22</strong></span>
+        </div>
+        <div class="products-grid" id="dealsPageGrid"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<div class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to top</div>
+<footer>
+  <div class="footer-main">
+    <div class="footer-col"><h3>Get to Know Us</h3><ul><li><a href="#">Careers</a></li><li><a href="#">Blog</a></li><li><a href="#">About Amazon</a></li><li><a href="#">Investor Relations</a></li></ul></div>
+    <div class="footer-col"><h3>Make Money with Us</h3><ul><li><a href="#">Sell on Amazon.in</a></li><li><a href="#">Become an Affiliate</a></li><li><a href="#">Advertise Your Products</a></li></ul></div>
+    <div class="footer-col"><h3>Amazon Payment Products</h3><ul><li><a href="#">Amazon Pay</a></li><li><a href="#">Gift Cards</a></li><li><a href="#">EMI Options</a></li></ul></div>
+    <div class="footer-col"><h3>Let Us Help You</h3><ul><li><a href="orders.html">Your Orders</a></li><li><a href="#">Shipping Rates &amp; Policies</a></li><li><a href="#">Amazon Prime</a></li><li><a href="#">Returns &amp; Replacements</a></li><li><a href="#">Help</a></li></ul></div>
+  </div>
+  <div class="footer-mid">
+    <div class="footer-logo">amazon<span style="color:#FF9900;font-size:12px">.in</span></div>
+    <div class="footer-links">
+      <a href="#">Australia</a><a href="#">Brazil</a><a href="#">Canada</a><a href="#">France</a><a href="#">Germany</a><a href="#">India</a><a href="#">Japan</a><a href="#">United Kingdom</a><a href="#">United States</a>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>© 1996–2025, Amazon.com, Inc. or its affiliates</p></div>
+</footer>
+
+<script src="js/static-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/products.js"></script>
+<script src="js/ai-assistant.js"></script>
+<script>
+function applyLocation() {
+  const pin = document.getElementById('locationInput').value.trim();
+  if (pin) {
+    document.getElementById('deliverPin').textContent = pin;
+    document.getElementById('locationModal').classList.remove('open');
+    showToast('Location updated!');
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  initCarousel();
+  initDealTimer();
+  initScrollReveal();
+  initProgressBar();
+  loadHomeSections();
+});
+document.addEventListener('click', e => {
+  const sg = document.getElementById('searchSuggestions');
+  if (sg && !sg.contains(e.target) && e.target.id !== 'searchInput') sg.style.display = 'none';
+});
+</script>
+</body>
+</html>

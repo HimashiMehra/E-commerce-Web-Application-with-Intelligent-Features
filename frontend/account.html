@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Account Settings — Amazon.in</title>
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body style="background:#f5f5f5">
+<header style="background:var(--amazon-dark)">
+  <div class="header-main">
+    <a href="index.html" class="logo"><svg width="95" height="29" viewBox="0 0 95 29" fill="none"><text x="0" y="22" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="white">amazon</text><path d="M5 26 Q47 32 90 26" stroke="#FF9900" stroke-width="3" fill="none" stroke-linecap="round"/></svg><span class="logo-country">.in</span></a>
+    <div style="flex:1;text-align:center;color:#fff;font-size:20px;font-weight:700">Account Settings</div>
+  </div>
+</header>
+<main style="max-width:600px; margin:40px auto; padding:0 20px;">
+  <div class="card" style="padding: 24px;">
+    <h2>Change your settings</h2>
+    <form onsubmit="event.preventDefault(); showToast('Settings updated successfully!');">
+      <div class="form-group" style="margin-top:20px;">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-input" value="Amazon User" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" value="user@example.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password</label>
+        <input type="password" class="form-input" placeholder="Leave blank to keep same">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:16px;">Save Changes</button>
+    </form>
+  </div>
+</main>
+<div id="toast-container"></div>
+<script>
+function showToast(msg,type='success'){const c=document.getElementById('toast-container');const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;c.appendChild(t);requestAnimationFrame(()=>{setTimeout(()=>t.classList.add('visible'),10)});setTimeout(()=>{t.classList.remove('visible');setTimeout(()=>t.remove(),400)},2800);}
+</script>
+</body>
+</html>

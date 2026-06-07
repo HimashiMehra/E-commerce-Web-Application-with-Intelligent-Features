@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Product Details — Amazon.in</title>
+<link rel="icon" href="https://www.amazon.in/favicon.ico">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="cart-backdrop" id="cartBackdrop" onclick="closeCart()"></div>
+<div class="cart-modal" id="cartModal">
+  <div class="cart-header"><h2>🛒 Shopping Cart</h2><button class="cart-close-btn" onclick="closeCart()">✕</button></div>
+  <div class="cart-items-list" id="cartItemsList"></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div style="font-size:16px;margin-bottom:12px">Subtotal (<span id="cartItemCount">0</span> items): <strong id="cartTotal">₹0</strong></div>
+    <button class="btn btn-primary btn-full" style="font-size:15px;padding:12px" onclick="goToCheckout()">Proceed to checkout</button>
+  </div>
+</div>
+
+<div class="top-bar">
+  <a href="index.html" onclick="return false">Today's Deals</a>
+</div>
+
+<header>
+  <div class="header-main">
+    <a href="index.html" class="logo">
+      <svg width="95" height="29" viewBox="0 0 95 29" fill="none">
+        <text x="0" y="22" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="white">amazon</text>
+        <path d="M5 26 Q47 32 90 26" stroke="#FF9900" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+      <span class="logo-country">.in</span>
+    </a>
+    <div class="search-wrapper" style="flex:1;margin:0 12px">
+      <div class="search-bar">
+        <input class="search-input" id="searchInput" type="text" placeholder="Search Amazon.in"
+          onkeydown="if(event.key==='Enter')window.location.href='index.html'">
+        <button class="search-btn" onclick="window.location.href='index.html'">🔍</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-item" onclick="window.location.href='login.html'"><span class="line1" id="greetLine">Hello, Sign in</span><span class="line2">Account</span></div>
+      <div class="header-item cart-item-nav" onclick="openCart()">
+        <div class="cart-icon-wrap">🛒<span class="cart-count" id="cartBadge" style="display:none">0</span></div>
+        <span style="font-weight:700;font-size:13px">Cart</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="main-content" style="padding-top:16px">
+    <!-- Breadcrumb -->
+    <div style="font-size:13px;color:var(--amazon-link);margin-bottom:16px" id="breadcrumb">
+      <a href="index.html" style="color:var(--amazon-link)">Amazon.in</a> › Loading...
+    </div>
+
+    <!-- Product Loading Skeleton -->
+    <div id="productSkeleton" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;background:#fff;padding:24px;border-radius:4px">
+      <div class="skeleton" style="height:400px"></div>
+      <div><div class="skeleton skeleton-line medium" style="height:24px;margin-bottom:12px"></div>
+        <div class="skeleton skeleton-line short" style="margin-bottom:8px"></div>
+        <div class="skeleton skeleton-line" style="height:36px;width:40%;margin-bottom:16px"></div>
+        <div class="skeleton skeleton-line medium"></div>
+        <div class="skeleton skeleton-line" style="height:44px;margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- Product Content -->
+    <div id="productContent" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;background:#fff;padding:24px;border-radius:4px;margin-bottom:16px" id="productMain"></div>
+
+      <!-- Reviews Section -->
+      <div class="card" id="reviewsSection" style="display:none">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('reviews',this)">Customer Reviews</div>
+          <div class="tab" onclick="switchTab('writeReview',this)">Write a Review</div>
+        </div>
+        <div id="tab-reviews"><div id="reviewsList"></div></div>
+        <div id="tab-writeReview" style="display:none">
+          <div id="reviewFormBox">
+            <div class="form-group">
+              <label class="form-label">Your Rating</label>
+              <div id="starPicker" style="display:flex;gap:4px;font-size:28px;cursor:pointer">
+                <span onclick="setReviewStar(1)">☆</span><span onclick="setReviewStar(2)">☆</span>
+                <span onclick="setReviewStar(3)">☆</span><span onclick="setReviewStar(4)">☆</span>
+                <span onclick="setReviewStar(5)">☆</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Review Title</label>
+              <input type="text" id="reviewTitle" class="form-input" placeholder="What's most important to know?">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Your Review</label>
+              <textarea id="reviewComment" class="form-input" rows="4" placeholder="Describe your experience with this product..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Products -->
+      <div class="card" id="relatedSection" style="display:none">
+        <h2 class="section-title" style="margin-bottom:14px">Customers also bought</h2>
+        <div class="h-scroll-wrap">
+          <button class="h-scroll-btn prev" onclick="scrollSection('relatedScroll',-1)">&#8249;</button>
+          <div class="h-scroll" id="relatedScroll"></div>
+          <button class="h-scroll-btn next" onclick="scrollSection('relatedScroll',1)">&#8250;</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="productError" style="display:none">
+      <div class="empty-state"><div class="empty-state-icon">😕</div><h2>Product not found</h2><p>This product may be unavailable.</p><a href="index.html" class="btn btn-primary">Continue Shopping</a></div>
+    </div>
+  </div>
+</main>
+
+<div class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to top</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/products.js"></script>
+<script>
+let currentProduct = null, selectedRating = 0;
+
+function scrollSection(id,dir){const el=document.getElementById(id);if(el)el.scrollBy({left:dir*700,behavior:'smooth'});}
+function showToast(msg,type='success'){const c=document.getElementById('toast-container');const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;c.appendChild(t);requestAnimationFrame(()=>{setTimeout(()=>t.classList.add('visible'),10)});setTimeout(()=>{t.classList.remove('visible');setTimeout(()=>t.remove(),400)},2800);}
+function starsHTML(rating,count){const full=Math.floor(rating),half=rating%1>=.5?1:0,empty=5-full-half;return `<div class="stars"><span class="stars-icons">${'★'.repeat(full)}${half?'½':''}${'☆'.repeat(empty)}</span><span class="stars-count">${Number(count).toLocaleString()}</span></div>`;}
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-reviews').style.display      = tab==='reviews'?'block':'none';
+  document.getElementById('tab-writeReview').style.display  = tab==='writeReview'?'block':'none';
+}
+
+function setReviewStar(n){
+  selectedRating=n;
+  document.querySelectorAll('#starPicker span').forEach((s,i)=>s.textContent=i<n?'★':'☆');
+}
+
+async function submitReview(){
+  if(!window.Auth||!window.Auth.isLoggedIn()){showToast('Please sign in to write a review','info');return;}
+  if(!selectedRating){showToast('Please select a star rating','error');return;}
+  const comment=document.getElementById('reviewComment').value.trim();
+  const title  =document.getElementById('reviewTitle').value.trim();
+  if(!comment){showToast('Please write a review','error');return;}
+  try{
+    await window.API.productsAPI.addReview(currentProduct._id,{rating:selectedRating,title,comment});
+    showToast('Review submitted! ⭐','success');
+    loadProduct();
+  }catch(e){showToast(e.message,'error');}
+}
+
+function productCardHTML(p){
+  const pid=p._id||p.id;
+  return `<div class="product-card" style="min-width:180px;max-width:180px" onclick="window.location.href='product.html?id=${pid}'">
+    <img class="product-img" src="${(p.images&&p.images[0])||''}" alt="${p.name}" style="height:150px" onerror="this.src='https://via.placeholder.com/200'">
+    <div class="product-title">${p.name}</div>
+    ${starsHTML(p.rating,p.numReviews||0)}
+    <div style="font-weight:700">₹${Number(p.price).toLocaleString('en-IN')}</div>
+  </div>`;
+}
+
+async function loadProduct(){
+  const id = new URLSearchParams(window.location.search).get('id');
+  if(!id){document.getElementById('productSkeleton').style.display='none';document.getElementById('productError').style.display='block';return;}
+  try{
+    const {product:p} = await window.API.productsAPI.getById(id);
+    currentProduct=p;
+    document.title = p.name+' — Amazon.in';
+    document.getElementById('breadcrumb').innerHTML=`<a href="index.html" style="color:var(--amazon-link)">Amazon.in</a> › <a href="index.html" style="color:var(--amazon-link)">${p.category}</a> › ${p.name.substring(0,60)}`;
+    const disc=p.originalPrice?Math.round((1-p.price/p.originalPrice)*100):0;
+    document.getElementById('productMain').innerHTML=`
+      <div>
+        <img id="mainProductImg" src="${p.images&&p.images[0]}" alt="${p.name}" style="width:100%;max-height:400px;object-fit:contain;border:1px solid #eee;border-radius:4px;padding:10px;cursor:zoom-in" onclick="this.style.transform=this.style.transform?'':'scale(1.5)'">
+        ${p.images&&p.images.length>1?`<div style="display:flex;gap:8px;margin-top:10px;overflow-x:auto">${p.images.map((img,i)=>`<img src="${img}" style="width:64px;height:64px;object-fit:contain;border:${i===0?'2px solid var(--amazon-orange)':'2px solid #ccc'};border-radius:3px;cursor:pointer;padding:4px" onclick="document.getElementById('mainProductImg').src='${img}';this.parentElement.querySelectorAll('img').forEach(x=>x.style.borderColor='#ccc');this.style.borderColor='var(--amazon-orange)'">`).join('')}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${p.badge?`<span class="badge badge-${p.badge==='Best Seller'?'bestseller':'deal'}">${p.badge}</span>`:''}
+        <h1 style="font-size:22px;font-weight:400;line-height:1.4">${p.name}</h1>
+        <div style="color:var(--amazon-link);font-size:14px">${p.brand||''}</div>
+        ${starsHTML(p.rating,p.numReviews||0)}
+        <hr class="divider">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-size:28px">₹${Number(p.price).toLocaleString('en-IN')}</span>
+          ${p.originalPrice?`<span class="price-original">₹${Number(p.originalPrice).toLocaleString('en-IN')}</span>`:''}
+          ${disc>=5?`<span class="price-save">${disc}% off</span>`:''}
+        </div>
+        ${p.prime?`<div class="prime-badge">⚡ <span style="color:#00A8E0;font-weight:900">prime</span> FREE Delivery</div>`:''}
+        <hr class="divider">
+        <div style="color:${p.stock>0?'var(--amazon-green)':'var(--amazon-red)'};font-weight:700;font-size:16px">${p.stock>0?'✅ In Stock':'❌ Out of Stock'}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <select id="qtySelect" style="border:1px solid #ccc;border-radius:3px;padding:6px 10px;font-size:14px;background:#f3f3f3">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option>${n}</option>`).join('')}</select>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" onclick="addToCart('${p._id}',parseInt(document.getElementById('qtySelect').value));showToast('Added to cart! 🛒')">🛒 Add to Cart</button>
+        <button class="btn btn-orange btn-full btn-lg" onclick="buyNowDirect('${p._id}')">⚡ Buy Now</button>
+        ${p.features&&p.features.length?`<div><h4 style="font-size:15px;font-weight:700;margin-bottom:8px">Key Features</h4><ul style="list-style:disc;padding-left:20px;font-size:13px;color:#333;line-height:2">${p.features.map(f=>`<li>${f}</li>`).join('')}</ul></div>`:''}
+        ${p.description?`<div><h4 style="font-size:15px;font-weight:700;margin-bottom:6px">About this item</h4><p style="font-size:13px;color:#333;line-height:1.7">${p.description}</p></div>`:''}
+      </div>`;
+
+    document.getElementById('productSkeleton').style.display='none';
+    document.getElementById('productContent').style.display='block';
+
+    // Reviews
+    if(p.reviews&&p.reviews.length>0){
+      document.getElementById('reviewsSection').style.display='block';
+      document.getElementById('reviewsList').innerHTML=p.reviews.map(r=>`<div style="border-bottom:1px solid #eee;padding:12px 0">
+        <div style="font-weight:700;font-size:14px">${r.name}</div>
+        <div style="color:#FF9900;font-size:14px">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+        ${r.title?`<div style="font-weight:700;font-size:14px;margin:4px 0">${r.title}</div>`:''}
+        <div style="font-size:13px;color:#333;line-height:1.5">${r.comment}</div>
+        <div style="font-size:12px;color:#777;margin-top:4px">${new Date(r.createdAt).toLocaleDateString('en-IN')}</div>
+      </div>`).join('');
+    } else {
+      document.getElementById('reviewsSection').style.display='block';
+      document.getElementById('reviewsList').innerHTML='<p style="color:#555;font-size:14px;padding:12px 0">No reviews yet. Be the first to review this product!</p>';
+    }
+
+    // Related products
+    const rel=await window.API.productsAPI.getAll({category:p.category,limit:10});
+    const related=rel.products.filter(x=>x._id!==p._id).slice(0,8);
+    if(related.length>0){
+      document.getElementById('relatedSection').style.display='block';
+      document.getElementById('relatedScroll').innerHTML=related.map(productCardHTML).join('');
+    }
+  }catch(e){
+    document.getElementById('productSkeleton').style.display='none';
+    document.getElementById('productError').style.display='block';
+  }
+}
+
+async function buyNowDirect(id){
+  const qty = parseInt(document.getElementById('qtySelect') ? document.getElementById('qtySelect').value : 1);
+  if(window.Auth && window.Auth.isLoggedIn()) {
+    window.location.href = `checkout.html?productId=${id}&qty=${qty}`;
+  } else {
+    window.location.href = `login.html?redirect=checkout.html?productId=${id}%26qty=${qty}`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{loadProduct();});
+</script>
+</body>
+</html>
